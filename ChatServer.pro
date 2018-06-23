@@ -1,22 +1,24 @@
 TEMPLATE = app
 
-QT += qml quick network
+QT += qml quick network sql
 
 CONFIG += c++11
 
 HEADERS += \
-    chattcpserver.h \
-    mymessagedef.h \
-    chatsocket.h \
-    framelesswindow.h
+    src/chattcpserver.h \
+    src/mymessagedef.h \
+    src/chatsocket.h \
+    src/framelesswindow.h \
+    src/database.h
 
-SOURCES += main.cpp \
-    chattcpserver.cpp \
-    chatsocket.cpp \
-    framelesswindow.cpp
+SOURCES += \
+    src/main.cpp \
+    src/chattcpserver.cpp \
+    src/chatsocket.cpp \
+    src/framelesswindow.cpp \
+    src/database.cpp
 
-RESOURCES += qml.qrc \
-    qml.qrc
+RESOURCES += qml.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =

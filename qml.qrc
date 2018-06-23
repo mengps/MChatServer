@@ -1,23 +1,23 @@
 <RCC>
     <qresource prefix="/">
-        <file>main.qml</file>
-        <file>9.jpg</file>
-        <file>CusButton.qml</file>
-        <file>MoveMouseArea.qml</file>
-        <file>ResizeMouseArea.qml</file>
-        <file>ButtonImage/add_hover.png</file>
-        <file>ButtonImage/add_normal.png</file>
-        <file>ButtonImage/close_disable.png</file>
-        <file>ButtonImage/close_down.png</file>
-        <file>ButtonImage/close_hover.png</file>
-        <file>ButtonImage/close_normal.png</file>
-        <file>ButtonImage/menu_down.png</file>
-        <file>ButtonImage/menu_hover.png</file>
-        <file>ButtonImage/menu_normal.png</file>
-        <file>ButtonImage/min_down.png</file>
-        <file>ButtonImage/min_hover.png</file>
-        <file>ButtonImage/min_normal.png</file>
-        <file>ButtonImage/minus_hover.png</file>
-        <file>ButtonImage/minus_normal.png</file>
+        <file>qml/main.qml</file>
+        <file>qml/CusButton.qml</file>
+        <file>qml/MoveMouseArea.qml</file>
+        <file>qml/ResizeMouseArea.qml</file>
+        <file>image/9.jpg</file>
+        <file>image/ButtonImage/add_hover.png</file>
+        <file>image/ButtonImage/add_normal.png</file>
+        <file>image/ButtonImage/close_disable.png</file>
+        <file>image/ButtonImage/close_down.png</file>
+        <file>image/ButtonImage/close_hover.png</file>
+        <file>image/ButtonImage/close_normal.png</file>
+        <file>image/ButtonImage/menu_down.png</file>
+        <file>image/ButtonImage/menu_hover.png</file>
+        <file>image/ButtonImage/menu_normal.png</file>
+        <file>image/ButtonImage/min_down.png</file>
+        <file>image/ButtonImage/min_hover.png</file>
+        <file>image/ButtonImage/min_normal.png</file>
+        <file>image/ButtonImage/minus_hover.png</file>
+        <file>image/ButtonImage/minus_normal.png</file>
     </qresource>
 </RCC>

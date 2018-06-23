@@ -17,7 +17,7 @@ FramelessWindow
     actualWidth: width
     title: qsTr("MPS Chat 服务器")
 
-    property var ipArray: new Array;
+    property var usersArray: new Array;
 
     function displayServerInfo(ip, port)
     {
@@ -30,28 +30,32 @@ FramelessWindow
         messageText.text += "\n" + msg;
     }
 
-    function addNewClient(ip)
+    function addNewClient(username, ip)
     {
-        ipArray.push(ip);
+        usersArray.push(username);
         myModel.append({ "ip": ip,
-                         "username": "00000001",
+                         "username": username,
                          "nickname": "MPS",
                          "state": "在线"});
-        addMessage(ip + "已经连接...");
+        addMessage(username + "已经连接...");
     }
 
     function removeClient(client)
     {
-        var index = ipArray.indexOf(client);
-        ipArray.splice(index, 1);
-        myModel.remove(index);
+        var index = usersArray.indexOf(client);
+        if (index != -1)
+        {
+            usersArray.splice(index, 1);
+            myModel.remove(index);
+        }
     }
 
     /*Image
     {
         id: background
-        source: "qrc:/9.jpg"
+        source: "qrc:/image/9.jpg"
     }*/
+
     Rectangle
     {
         anchors.fill: parent
@@ -85,9 +89,9 @@ FramelessWindow
             }
             Component.onCompleted:
             {
-                buttonNormalImage = "qrc:/ButtonImage/menu_normal.png";
-                buttonPressedImage = "qrc:/ButtonImage/menu_down.png";
-                buttonHoverImage = "qrc:/ButtonImage/menu_hover.png";
+                buttonNormalImage = "qrc:/image/ButtonImage/menu_normal.png";
+                buttonPressedImage = "qrc:/image/ButtonImage/menu_down.png";
+                buttonHoverImage = "qrc:/image/ButtonImage/menu_hover.png";
             }
         }
 
@@ -103,9 +107,9 @@ FramelessWindow
             }
             Component.onCompleted:
             {
-                buttonNormalImage = "qrc:/ButtonImage/min_normal.png";
-                buttonPressedImage = "qrc:/ButtonImage/min_down.png";
-                buttonHoverImage = "qrc:/ButtonImage/min_hover.png";
+                buttonNormalImage = "qrc:/image/ButtonImage/min_normal.png";
+                buttonPressedImage = "qrc:/image/ButtonImage/min_down.png";
+                buttonHoverImage = "qrc:/image/ButtonImage/min_hover.png";
             }
         }
 
@@ -121,10 +125,10 @@ FramelessWindow
             }
             Component.onCompleted:
             {
-                buttonNormalImage = "qrc:/ButtonImage/close_normal.png";
-                buttonPressedImage = "qrc:/ButtonImage/close_down.png";
-                buttonHoverImage = "qrc:/ButtonImage/close_hover.png";
-                buttonDisableImage = "qrc:/ButtonImage/close_disable.png";
+                buttonNormalImage = "qrc:/image/ButtonImage/close_normal.png";
+                buttonPressedImage = "qrc:/image/ButtonImage/close_down.png";
+                buttonHoverImage = "qrc:/image/ButtonImage/close_hover.png";
+                buttonDisableImage = "qrc:/image/ButtonImage/close_disable.png";
             }
         }
     }
@@ -241,7 +245,7 @@ FramelessWindow
         {
             role: "username"
             title: "帐号"
-            width: 100
+            width: 150
         }
 
         TableViewColumn
@@ -255,7 +259,7 @@ FramelessWindow
         {
             role: "nickname"
             title: "昵称"
-            width: 100
+            width: 150
         }
 
         TableViewColumn
@@ -286,12 +290,14 @@ FramelessWindow
             contentHeight: messageText.contentHeight
             contentWidth: messageText.contentWidth
 
-            Text
+            TextEdit
             {
                 id: messageText
                 width: flick.width
                 height: flick.height
-                font.family: "微软雅黑";
+                wrapMode: Text.WrapAnywhere
+                font.family: "微软雅黑"
+                //textFormat: Text.RichText
                 text: "服务器运行中..."
                 color: "#400040"
                 onTextChanged: flick.contentY = Math.max(0, contentHeight - height);

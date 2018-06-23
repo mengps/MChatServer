@@ -4,7 +4,6 @@
 #include <QNetworkInterface>
 #include <QThread>
 #include "chattcpserver.h"
-#include "chatsocket.h"
 
 ChatTcpServer::ChatTcpServer(QQmlEngine *engine, QObject *parent)
     :   m_qmlengine(engine), QTcpServer(parent)
@@ -19,7 +18,7 @@ ChatTcpServer::~ChatTcpServer()
 
 void ChatTcpServer::loadWindow()
 {
-    QQmlComponent component(m_qmlengine, "qrc:/main.qml");
+    QQmlComponent component(m_qmlengine, "qrc:/qml/main.qml");
     QObject *obj = component.create();
     m_window = qobject_cast<QQuickWindow *>(obj);
     m_window->requestActivate();
@@ -51,16 +50,34 @@ void ChatTcpServer::incomingConnection(qintptr socketDescriptor)
     ChatSocket *socket = new ChatSocket(socketDescriptor);
 
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+    connect(socket, &ChatSocket::hasNewMessage, this, &ChatTcpServer::disposeMessage);
     connect(socket, &ChatSocket::consoleMessage, this, [this](const QString &message)
     {
         QMetaObject::invokeMethod(m_window, "addMessage", Q_ARG(QVariant, QVariant(message)));
     });
-    connect(socket, &ChatSocket::clientDisconnected, this, [this](const QString &ip)
+    connect(socket, &ChatSocket::clientLoginSuccess, this, [this](const QString &username, const QString &ip)
     {
-        QMetaObject::invokeMethod(m_window, "removeClient", Q_ARG(QVariant, QVariant(ip)));
+        ChatSocket *socket = qobject_cast<ChatSocket *>(sender());
+        m_users[username] = socket;
+        QMetaObject::invokeMethod(m_window, "addNewClient", Q_ARG(QVariant, username), Q_ARG(QVariant, ip));
     });
-    QMetaObject::invokeMethod(m_window, "addNewClient", Q_ARG(QVariant, QVariant(socket->peerAddress().toString())));
+    connect(socket, &ChatSocket::clientDisconnected, this, [this](const QString &username)
+    {
+        m_users.remove(username);
+        QMetaObject::invokeMethod(m_window, "removeClient", Q_ARG(QVariant, QVariant(username)));
+    });
 
     socket->moveToThread(thread);
     thread->start();
+}
+
+void ChatTcpServer::disposeMessage(const QByteArray &sender, const QByteArray &receiver, MSG_TYPE type, const QByteArray &data)
+{
+    if (m_users.contains(QString(receiver)))
+        QMetaObject::invokeMethod(m_users[QString(receiver)], "writeClientData",  Q_ARG(QByteArray, sender),
+                Q_ARG(MSG_TYPE, type),  Q_ARG(QByteArray, data));
+    else
+    {
+     //write to database
+    }
 }

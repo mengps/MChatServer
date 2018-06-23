@@ -8,6 +8,8 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
 
     qmlRegisterType<FramelessWindow>("an.framelessWindow", 1, 0, "FramelessWindow");
+    qRegisterMetaType<MSG_TYPE>("MSG_TYPE");
+
     QQmlApplicationEngine engine;
     ChatTcpServer server(&engine);
     if (!server.listen(QHostAddress::AnyIPv4, 43800))
