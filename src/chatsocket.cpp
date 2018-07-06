@@ -48,7 +48,7 @@ void ChatSocket::continueWrite(qint64 sentSize)
     static int sentBytes = 0;
     sentBytes += sentSize;
 
-    qDebug() << sentBytes << m_fileBytes;
+    qDebug() << __func__ << sentBytes << m_fileBytes;
     if (sentBytes >= m_fileBytes)
     {
         m_fileBytes = 0;

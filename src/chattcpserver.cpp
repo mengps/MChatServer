@@ -41,7 +41,7 @@ void ChatTcpServer::loadWindow()
         ipAddress = QHostAddress(QHostAddress::LocalHost).toString();
 
     QMetaObject::invokeMethod(m_window, "displayServerInfo",
-                              Q_ARG(QVariant, QVariant("10.103.0.13")), Q_ARG(QVariant, QVariant(43800)));
+                              Q_ARG(QVariant, QVariant("127.0.0.1 本地主机")), Q_ARG(QVariant, QVariant(43800)));
 }
 
 void ChatTcpServer::incomingConnection(qintptr socketDescriptor)
@@ -65,6 +65,7 @@ void ChatTcpServer::incomingConnection(qintptr socketDescriptor)
     {
         m_users.remove(username);
         QMetaObject::invokeMethod(m_window, "removeClient", Q_ARG(QVariant, QVariant(username)));
+        qDebug() << m_users;
     });
 
     socket->moveToThread(thread);

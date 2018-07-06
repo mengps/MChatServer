@@ -46,6 +46,6 @@ struct MessageHeader
     MSG_ID_TYPE     sender;
     MSG_ID_TYPE     receiver;
     MSG_MD5_TYPE    md5;
-};
+};//此结构体并没有用到，仅仅是为了表明该消息头的结构
 
 #endif // MYMESSAGEDEF_H
