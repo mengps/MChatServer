@@ -54,11 +54,15 @@ void ChatSocket::continueWrite(qint64 sentSize)
         m_fileBytes = 0;
         sentBytes = 0;
         m_data.clear();
-        return;
+        m_hasMessageProcessing = false;
+        if (!m_messageQueue.isEmpty())
+            processNextMessage();       //如果消息队列不为空，则继续处理下一条待发送消息
     }
-
-    write(m_data);
-    QThread::msleep(10);
+    else
+    {
+        write(m_data);
+        QThread::msleep(10);
+    }
 }
 
 void ChatSocket::checkHeartbeat()
@@ -78,11 +82,31 @@ void ChatSocket::onDisconnected()
     deleteLater();
 }
 
+void ChatSocket::processNextMessage()
+{
+    if (!m_hasMessageProcessing && !m_messageQueue.isEmpty())
+    {
+        QByteArray block;
+        QDataStream out(&block, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_5_9);
+        Message *message = m_messageQueue.dequeue();
+        out << *message;
+        m_data = block;
+        m_fileBytes = block.size();
+        m_hasMessageProcessing = true;
+        delete message;
+
+        write(block);
+        flush();        //立即发送消息
+    }
+}
+
 void ChatSocket::toJsonStringAndSend(const UserInfo &info, const QMap<QString, QStringList> &friends)
 {
     QJsonObject object;
     object.insert("Username", info.username);
     object.insert("Nickname", info.nickname);
+    object.insert("HeadImage", info.headImage);
     object.insert("Gender", info.gender);
     object.insert("Birthday", info.birthday);
     object.insert("Signature", info.signature);
@@ -98,12 +122,15 @@ void ChatSocket::toJsonStringAndSend(const UserInfo &info, const QMap<QString, Q
             QJsonObject object2;
             object2.insert("Username", info2.username);
             object2.insert("Nickname", info2.nickname);
+            object2.insert("HeadImage", info2.headImage);
             object2.insert("Gender", info2.gender);
             object2.insert("Birthday", info2.birthday);
             object2.insert("Signature", info2.signature);
             object2.insert("UnreadMessage", info2.unreadMessage);
             object2.insert("Level", info2.level);
             array.append(object2);
+
+
         }
         QJsonObject obj;
         obj.insert("Group", it.key());
@@ -111,80 +138,46 @@ void ChatSocket::toJsonStringAndSend(const UserInfo &info, const QMap<QString, Q
         friendList.append(obj);
     }
     object.insert("FriendList", friendList);
-    writeClientData(m_username, MT_USERINFO, QJsonDocument(object).toJson());
-
+    writeClientData(m_username, MT_USERINFO, MO_NULL, QJsonDocument(object).toJson());
     qDebug() << object;
 }
 
-void ChatSocket::writeClientData(const QByteArray &sender, MSG_TYPE type, QByteArray data)
+void ChatSocket::writeClientData(const QByteArray &sender, MSG_TYPE type, MSG_OPTION_TYPE option, QByteArray data)
 {
-    QByteArray block;
-    QDataStream out(&block, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_9);
+    QByteArray base64 = data.toBase64();
+    MSG_MD5_TYPE md5 = QCryptographicHash::hash(base64, QCryptographicHash::Md5);
 
-    MSG_FLAG_TYPE flag = MSG_FLAG;
-    MSG_MD5_TYPE md5 = QCryptographicHash::hash(QByteArray(), QCryptographicHash::Md5);
-
-    m_data = data.toBase64();
-    md5 = QCryptographicHash::hash(m_data, QCryptographicHash::Md5);
-    m_fileBytes = m_data.size() + sizeof(flag) + sizeof(type) + sizeof(MSG_SIZE_TYPE) +
-            sizeof (QByteArray) + sender.size() + sizeof(QByteArray) + m_username.size() +
-            sizeof(QByteArray) + md5.size();
-
-    out << flag << type << m_data.size() << sender << m_username << md5;
-    write(block);
-    QThread::msleep(10);
+    MessageHeader header = { MSG_FLAG, type, base64.size(), option, sender, m_username, md5 };
+    Message *message = new Message(header, base64);
+    m_messageQueue.enqueue(message);
+    processNextMessage();
 }
 
 void ChatSocket::readClientData()
 {
-    static int got_size = 0;
-    static MSG_TYPE type = MT_UNKNOW;
-    static MSG_ID_TYPE sender = MSG_ID_TYPE();
-    static MSG_ID_TYPE receiver = MSG_ID_TYPE();
-    static MSG_MD5_TYPE md5;
+    static int gotSize = 0;
 
-    if (m_data.size() == 0)  //必定为消息头
-    {        
-        QDataStream in(this);
+    if (m_data.size() == 0)
+    {
+        QByteArray data;
+        data = read(bytesAvailable());
+        m_data.replace(gotSize, data.size(), data);
+        gotSize += data.size();
+        qDebug() << gotSize << m_data.size() << m_data;
+    }
+
+    if (gotSize == m_data.size())     //接收完毕
+    {
+        Message message;
+        QDataStream in(&m_data, QIODevice::ReadOnly);
         in.setVersion(QDataStream::Qt_5_9);
+        in >> message;
+        QByteArray md5_t = QCryptographicHash::hash(message.data, QCryptographicHash::Md5);
 
-        MSG_FLAG_TYPE flag;
-        in >> flag;
-        if (flag != MSG_FLAG)
+        if (message.header.md5 == md5_t)   //正确的消息
         {
-            readAll();
-            return;
-        }
-
-        in >> type;
-        if (type == MT_HEARTBEAT)           //心跳检测，直接返回
-        {
-            readAll();
-            return;
-        }
-
-        MSG_SIZE_TYPE size;
-        in >> size >> sender >> receiver >> md5;
-        m_data.resize(size);
-        qDebug() << "header type" << type;
-    }
-    else                                //合并数据
-    {
-        QByteArray data = read(bytesAvailable());
-        m_data.replace(got_size, data.size(), data);
-        got_size += data.size();
-    }
-
-    if (got_size == m_data.size())     //接收完毕
-    {
-        QByteArray md5_t = QCryptographicHash::hash(m_data, QCryptographicHash::Md5);
-        if (md5 == md5_t)   //正确的消息
-        {
-            QString str = QString::fromLocal8Bit(QByteArray::fromBase64(m_data));
-            m_data.clear();
-
-            switch (type)
+            QString str = QString::fromLocal8Bit(QByteArray::fromBase64(message.data));
+            switch (message.header.type)
             {
             case MT_CHECK:
             {
@@ -194,35 +187,39 @@ void ChatSocket::readClientData()
                 UserInfo info = m_database->getUserInfo(list.at(0).toLocal8Bit());
                 if (info.password == list.at(1).toLocal8Bit())
                 {
-                    writeClientData(QByteArray(), MT_CHECK, QString("1").toLocal8Bit());
-                    m_username = list.at(0).toLocal8Bit();        //记录该socket的帐号
+                    writeClientData(QByteArray(), MT_CHECK, MO_NULL, CHECK_SUCCESS);
+                    m_username = list.at(0).toLatin1();        //记录该socket的帐号
                     emit clientLoginSuccess(m_username, peerAddress().toString());
                 }
-                else writeClientData(QByteArray(), MT_CHECK, QString("0").toLocal8Bit());
+                else writeClientData(QByteArray(), MT_CHECK, MO_NULL, CHECK_FAIL);
 
                 break;
             }
 
             case MT_USERINFO:
             {
-                qDebug() << "MT_USERINFO";
-                if (str == "1")
+                qDebug() << "MT_USERINFO" << message.header.option;
+                if (message.header.option == MO_DOWNLOAD)
                 {
                     auto info = m_database->getUserInfo(m_username);
                     auto friends = m_database->getUserFriends(m_username);
                     toJsonStringAndSend(info, friends);
                 }
+                else if (message.header.option == MO_UPLOAD)
+                {
+
+                }
                 break;
             }
 
             case MT_SHAKE:
-                qDebug() << "发送给" << receiver << "的窗口震动:" << str;
-                emit hasNewMessage(m_username, receiver, MT_SHAKE, QByteArray());
+                qDebug() << "发送给" << message.header.receiver << "的窗口震动";
+                emit hasNewMessage(m_username, message.header.receiver, MT_SHAKE, message.header.option, str.toLocal8Bit());
                 break;
 
             case MT_TEXT:
-                qDebug() << "发送给" << receiver << "的消息:" << str;
-                emit hasNewMessage(m_username, receiver, MT_TEXT, str.toLocal8Bit());
+                qDebug() << "发送给" << message.header.receiver << "的消息:" << str;
+                emit hasNewMessage(m_username, message.header.receiver, MT_TEXT, message.header.option, str.toLocal8Bit());
                 break;
 
             case MT_IMAGE:
@@ -237,12 +234,8 @@ void ChatSocket::readClientData()
 
                 break;
             }
-
-            got_size = 0;           //重新开始
-            type = MT_UNKNOW;
-            sender.clear();
-            receiver.clear();
-            md5.clear();
         }
+        gotSize = 0;
+        m_data.clear();
     }
 }

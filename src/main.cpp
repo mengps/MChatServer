@@ -9,6 +9,7 @@ int main(int argc, char *argv[])
 
     qmlRegisterType<FramelessWindow>("an.framelessWindow", 1, 0, "FramelessWindow");
     qRegisterMetaType<MSG_TYPE>("MSG_TYPE");
+    qRegisterMetaType<MSG_OPTION_TYPE>("MSG_OPTION_TYPE");
 
     QQmlApplicationEngine engine;
     ChatTcpServer server(&engine);

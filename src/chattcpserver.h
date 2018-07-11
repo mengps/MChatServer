@@ -22,9 +22,10 @@ protected:
     void incomingConnection(qintptr socketDescriptor) override;
 
 private slots:
-    void disposeMessage(const QByteArray &sender, const QByteArray &receiver, MSG_TYPE type, const QByteArray &data);
+    void disposeMessage(const QByteArray &sender, const QByteArray &receiver, MSG_TYPE type, MSG_OPTION_TYPE option, const QByteArray &data);
 
 private:
+    Database *m_database;
     QQmlEngine *m_qmlengine;
     QPointer<QQuickWindow> m_window;
     QMap<QString, ChatSocket*> m_users;

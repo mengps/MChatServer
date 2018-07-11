@@ -3,6 +3,7 @@
 
 #include <QTcpSocket>
 #include <QDateTime>
+#include <QQueue>
 #include "database.h"
 #include "mymessagedef.h"
 
@@ -16,7 +17,7 @@ public:
     ~ChatSocket();
 
 public slots:
-    void writeClientData(const QByteArray &sender, MSG_TYPE type, QByteArray data);
+    void writeClientData(const QByteArray &sender, MSG_TYPE type, MSG_OPTION_TYPE option, QByteArray data);
     void readClientData();
 
 private slots:
@@ -24,13 +25,14 @@ private slots:
     void continueWrite(qint64 sentSize);
     void checkHeartbeat();
     void onDisconnected();
+    void processNextMessage();
     //将查询到的数据转换成JSON并发送回客户端
     void toJsonStringAndSend(const UserInfo &info, const QMap<QString, QStringList> &friends);
 
 signals:
     void clientLoginSuccess(const QString &username, const QString &ip);
     void clientDisconnected(const QString &username);
-    void hasNewMessage(const QByteArray &sender, const QByteArray &receiver, MSG_TYPE type, const QByteArray &data);
+    void hasNewMessage(const QByteArray &sender, const QByteArray &receiver, MSG_TYPE type, MSG_OPTION_TYPE option, const QByteArray &data);
     void consoleMessage(const QString &message);
 
 private:
@@ -39,7 +41,8 @@ private:
     QByteArray m_data;
     qint64 m_fileBytes;
     QByteArray m_username;
-
+    QQueue<Message *> m_messageQueue;
+    bool m_hasMessageProcessing;          //指示是否有消息在处理中
     Database *m_database;
 };
 

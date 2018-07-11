@@ -16,7 +16,8 @@ SOURCES += \
     src/chattcpserver.cpp \
     src/chatsocket.cpp \
     src/framelesswindow.cpp \
-    src/database.cpp
+    src/database.cpp \
+    src/mymessagedef.cpp
 
 RESOURCES += qml.qrc
 

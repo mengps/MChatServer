@@ -7,8 +7,8 @@ extern QDebug operator<<(QDebug debug, const UserInfo &info)
 {
     QDebugStateSaver saver(debug);
     debug << "username: " << info.username  << "password: " << info.password  << "nickname: " << info.nickname
-          << "gende: " << info.gender  << "birthday: " << info.birthday  << "signature: " << info.signature
-          << "unreadMessage: " << info.unreadMessage  << "level: " << info.level;
+          << "headImage: " << info.headImage << "gende: " << info.gender  << "birthday: " << info.birthday
+          << "signature: " << info.signature << "unreadMessage: " << info.unreadMessage  << "level: " << info.level;
     return debug;
 }
 
@@ -59,12 +59,13 @@ bool Database::createUser(const UserInfo &info)
         dir.mkdir(user_dir + "/messageText");
 
         openDatabase();
-        QString insert = "INSERT INTO info VALUES(?, ?, ?, ?, ?, ?, ?);";
+        QString insert = "INSERT INTO info VALUES(?, ?, ?, ?, ?, ?, ?, ?);";
         QSqlQuery query(m_database);
         query.prepare(insert);
         query.addBindValue(info.username);
         query.addBindValue(info.password);
         query.addBindValue(info.nickname);
+        query.addBindValue(info.headImage);
         query.addBindValue(info.gender);
         query.addBindValue(info.birthday);
         query.addBindValue(info.signature);
@@ -101,11 +102,12 @@ UserInfo Database::getUserInfo(const QString &username)
     info.username = query.value(0).toString();
     info.password = query.value(1).toString();
     info.nickname = query.value(2).toString();
-    info.gender = query.value(3).toString();
-    info.birthday = query.value(4).toString();
-    info.signature = query.value(5).toString();
-    info.unreadMessage = query.value(6).toInt();
-    info.level = query.value(7).toInt();
+    info.headImage = query.value(3).toString();
+    info.gender = query.value(4).toString();
+    info.birthday = query.value(5).toString();
+    info.signature = query.value(6).toString();
+    info.unreadMessage = query.value(7).toInt();
+    info.level = query.value(8).toInt();
     closeDatabase();
 
     return info;
@@ -144,6 +146,30 @@ QMap<QString, QStringList> Database::getUserFriends(const QString &username)
     closeDatabase();
 
     return friends;
+}
+
+bool  Database::addUnreadMessage(const QString &username)
+{
+    if (!openDatabase())
+        return false;
+
+    QString query_update = "UPDATE info "
+                           "SET user_unreadMessage = (SELECT user_unreadMessage "
+                           "                          FROM info "
+                           "                          WHERE user_username = '" + username + "') + 1 "
+                           "WHERE user_username = '" + username + "';";
+    QSqlQuery query(m_database);
+    if (query.exec(query_update))
+    {
+        closeDatabase();
+        return true;
+    }
+    else
+    {
+        qDebug() << __func__ << query.lastError().text();
+        closeDatabase();
+        return false;
+    }
 }
 
 bool Database::tableExists()

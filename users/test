@@ -1,48 +1,3 @@
-CREATE TABLE IF NOT EXISTS Friends
-(
-    fri_username char(8) NOT NULL PRIMARY KEY,
-    fri_nickname char(24) NOT NULL DEFAULT '游客',
-    fri_groupname char(36) NOT NULL DEFAULT '我的好友',
-    fri_signature char(64) NULL,
-    fri_birthday date NOT NULL DEFAULT (DATE('now')),
-    fri_headImage varchar(64) NULL DEFAULT 'qrc:head1.jpg'
-);
-
-CREATE TABLE IF NOT EXISTS Messages
-(   
-    msg_index int NOT NULL PRIMARY KEY,
-    msg_sender char(10) NOT NULL,
-    msg_datetime datetime NOT NULL,
-    msg_content text NOT NULL
-);
-
--- YYYYMMDD HHMMSS
-INSERT INTO Messages
-VALUES (1, '843261040', '20170519 122911', "Hello World1!");
-INSERT INTO Messages
-VALUES (2, '843261040', '20170519 122912', "Hello World2!");
-INSERT INTO Messages
-VALUES (3, '843261040', '20170519 122913', "Hello World3!");
-INSERT INTO Messages
-VALUES (4, '843261040', '20170519 122914', "Hello World4!");
-INSERT INTO Messages
-VALUES (5, '843261040', '20170519 123010', "Hello Chat!");
-INSERT INTO Messages
-VALUES (6, '843261040', '20170519 123011', "Hello Chat2!");
-INSERT INTO Messages
-VALUES (7, '843261040', '20170519 123012', "Hello Chat3!");
-INSERT INTO Messages
-VALUES (8, '843261040', '20170519 123013', "Hello Chat4!");
-INSERT INTO Messages
-VALUES (9, '843261040', '20170519 123014', "Hello Chat5!");
-
-SELECT COUNT(*)
-FROM Messages;
-
-SELECT *
-FROM Messages
-WHERE msg_index BETWEEN 95 AND 100;
-
 CREATE TABLE IF NOT EXISTS users
 (
     user_username    VARCHAR(10) NOT NULL,
@@ -58,6 +13,7 @@ CREATE TABLE IF NOT EXISTS info
     user_username      VARCHAR(10) NOT NULL PRIMARY KEY,
     user_password      VARCHAR(32) NOT NULL,
     user_nickname      VARCHAR(32) DEFAULT 'USER',
+    user_headImage     VARCHAR(32) DEFAULT 'qrc:/image/winIcon.png',
     user_gender        VARCHAR(2)  DEFAULT '男',
     user_birthday      TEXT        DEFAULT (DATE('now')),
     user_signature     VARCHAR(64) NULL,
@@ -65,8 +21,8 @@ CREATE TABLE IF NOT EXISTS info
     user_level         int     DEFAULT 1
 );
 
-INSERT INTO info VALUES('843261040', '00000000000', 'MPS', '男', '1996-07-27', '嗷嗷嗷嗷嗷嗷嗷嗷嗷嗷', 0, 999);
-INSERT INTO info VALUES('00000001', '00000000000', 'mps1', '男', '1997-12-02', '我不想多说我只知道我爱你我还爱着你', 0, 17);
+INSERT INTO info VALUES('843261040', '00000000000', 'MPS', 'head1.jpg', '男', '1996-07-27', '嗷嗷嗷嗷嗷嗷嗷嗷嗷嗷', 0, 999);
+INSERT INTO info VALUES('00000001', '00000000000', 'mps1', '11.jpg', '男', '1997-12-02', '我不想多说我只知道我爱你我还爱着你', 0, 17);
 
 SELECT user_friend AS user_id , user_group AS user_group
 FROM users
@@ -78,4 +34,8 @@ WHERE user_friend = '843261040';
 
 SELECT *
 FROM info
+WHERE user_username = '843261040';
+
+UPDATE info
+SET user_unreadMessage = 1
 WHERE user_username = '843261040';

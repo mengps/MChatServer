@@ -3,12 +3,13 @@
 #include <QQuickWindow>
 #include <QNetworkInterface>
 #include <QThread>
+#include <QDateTime>
 #include "chattcpserver.h"
 
 ChatTcpServer::ChatTcpServer(QQmlEngine *engine, QObject *parent)
     :   m_qmlengine(engine), QTcpServer(parent)
 {
-
+    m_database = new Database("ServerConnection", this);
 }
 
 ChatTcpServer::~ChatTcpServer()
@@ -72,13 +73,28 @@ void ChatTcpServer::incomingConnection(qintptr socketDescriptor)
     thread->start();
 }
 
-void ChatTcpServer::disposeMessage(const QByteArray &sender, const QByteArray &receiver, MSG_TYPE type, const QByteArray &data)
+void ChatTcpServer::disposeMessage(const QByteArray &sender, const QByteArray &receiver, MSG_TYPE type, MSG_OPTION_TYPE option, const QByteArray &data)
 {
-    if (m_users.contains(QString(receiver)))
+    //将双方的消息存入
+    QFile file("users/" + QString(sender) + "/messageText/MSG" + QString(sender) + ".txt");
+    file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text);
+    QTextStream out(&file);
+    out << "[time:" << QDateTime::currentDateTime().toString("yyyyMMdd hhmmss") << "]" << endl
+        << "[type:" << type << "]" << endl
+        << "[option:" << option << "]" << endl
+        << "[data:" << QString::fromLocal8Bit(data) << "]" << endl;
+    file.close();
+
+    file.setFileName("users/" + QString(receiver) + "/messageText/MSG" + QString(receiver) + ".txt");
+    file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text);
+    out << "[time:" << QDateTime::currentDateTime().toString("yyyyMMdd hhmmss") << "]" << endl
+        << "[type:" << type << "]" << endl
+        << "[option:" << option << "]" << endl
+        << "[data:" << QString::fromLocal8Bit(data) << "]" << endl;
+    file.close();
+
+    if (m_users.contains(QString(receiver)))    //如果另一方在线
         QMetaObject::invokeMethod(m_users[QString(receiver)], "writeClientData",  Q_ARG(QByteArray, sender),
-                Q_ARG(MSG_TYPE, type),  Q_ARG(QByteArray, data));
-    else
-    {
-     //write to database
-    }
+                Q_ARG(MSG_TYPE, type),  Q_ARG(MSG_OPTION_TYPE, MO_NULL), Q_ARG(QByteArray, data));
+    else m_database->addUnreadMessage(QString(receiver));    //不在线则unreadMessage+1，下次登录时发送
 }

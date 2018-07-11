@@ -11,6 +11,7 @@ struct UserInfo
     QString username;
     QString password;
     QString nickname;
+    QString headImage;
     QString gender;
     QString birthday;
     QString signature;
@@ -36,6 +37,8 @@ public:
 
     bool addFriend(const QString &username, const QString &friendname);
     QMap<QString, QStringList> getUserFriends(const QString &username);
+
+    bool addUnreadMessage(const QString &username);
 
 private:
     bool tableExists();
