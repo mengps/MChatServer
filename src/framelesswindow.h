@@ -8,6 +8,7 @@ class FramelessWindow : public QQuickWindow
     Q_OBJECT
 
     Q_PROPERTY(QString windowIcon READ windowIcon WRITE setWindowIcon NOTIFY windowIconChanged)
+    Q_PROPERTY(QPoint coord READ coord WRITE setCoord NOTIFY coordChanged)
     Q_PROPERTY(int width READ width WRITE setWidth NOTIFY widthChanged)
     Q_PROPERTY(int height READ height WRITE setHeight NOTIFY heightChanged)
     Q_PROPERTY(int actualWidth READ actualWidth WRITE setActualWidth NOTIFY actualWidthChanged)
@@ -26,6 +27,7 @@ public:
     ~FramelessWindow();
 
     QString windowIcon() const;
+    QPoint coord() const;
     int width() const;
     int height() const;
     int actualWidth() const;
@@ -40,6 +42,7 @@ public:
 
 public slots:
     void setWindowIcon(const QString &arg);
+    void setCoord(const QPoint &arg);
     void setWidth(int arg);
     void setHeight(int arg);
     void setActualWidth(int arg);
@@ -55,6 +58,7 @@ public slots:
 
 signals:
     void windowIconChanged(const QString &arg);
+    void coordChanged(const QPoint &arg);
     void widthChanged(int arg);
     void heightChanged(int arg);
     void actualWidthChanged(int arg);

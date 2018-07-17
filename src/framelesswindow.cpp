@@ -19,7 +19,7 @@ FramelessWindow::FramelessWindow(QQuickWindow *parent)
     setFlags(flags() | Qt::Tool | Qt::FramelessWindowHint);
     setColor(Qt::transparent);
 
-/*#ifdef _WIN32
+/*#if defined(Q_OS_WIN)
     HWND hwnd = reinterpret_cast<HWND>(winId());
     DWORD class_style = ::GetClassLong(hwnd, GCL_STYLE);
     class_style &= ~CS_DROPSHADOW;
@@ -35,6 +35,11 @@ FramelessWindow::~FramelessWindow()
 QString FramelessWindow::windowIcon() const
 {
     return m_windowIcon;
+}
+
+QPoint FramelessWindow::coord() const
+{
+    return QPoint(x(), y());
 }
 
 int FramelessWindow::width() const
@@ -99,6 +104,16 @@ void FramelessWindow::setWindowIcon(const QString &arg)
         setIcon(QIcon(arg));
         m_windowIcon = arg;
         emit windowIconChanged(arg);
+    }
+}
+
+void FramelessWindow::setCoord(const QPoint &arg)
+{
+    if (coord() != arg)
+    {
+        setX(arg.x());
+        setY(arg.y());
+        emit coordChanged(arg);
     }
 }
 
@@ -180,22 +195,7 @@ void FramelessWindow::setMousePenetrate(bool arg)
 {
     if (m_mousePenetrate != arg)
     {
-#ifdef Q_OS_LINUX
-        if(arg){
-            XShapeCombineRectangles(QX11Info::display(), winId(), ShapeInput, 0,
-                    0, NULL, 0, ShapeSet, YXBanded);
-        }else{
-            XRectangle* myrect = new XRectangle;
-            myrect->x = 0;
-            myrect->y = 0;
-            myrect->width = actualWidth ();
-            myrect->height = actualHeight ();
-            XShapeCombineRectangles(QX11Info::display(), winId(), ShapeInput, 0,
-                    0, myrect, 1, ShapeSet, YXBanded);
-        }
-#elif defined(Q_OS_OSX)
-        qDebug()<<"mac os暂不支持鼠标穿透";
-#elif defined(Q_OS_WIN)
+#if defined(Q_OS_WIN)
         HWND my_hwnd = (HWND)this->winId ();
         if(arg)
         {
@@ -240,9 +240,9 @@ void FramelessWindow::setTaskbarHint(bool arg)
 }
 
 void FramelessWindow::close()
-{  
-    deleteLater();
+{
     emit closed();
+    deleteLater();
 }
 
 bool FramelessWindow::event(QEvent *ev)
