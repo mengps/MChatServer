@@ -1,9 +1,10 @@
 #ifndef CHATTCPSERVER_H
 #define CHATTCPSERVER_H
+
+#include "chatsocket.h"
 #include <QTcpServer>
 #include <QPointer>
 #include <QMap>
-#include "chatsocket.h"
 
 class QQmlEngine;
 class QQuickWindow;
@@ -14,7 +15,7 @@ class ChatTcpServer : public QTcpServer
 
 public:
     ChatTcpServer(QQmlEngine *engine, QObject *parent = nullptr);
-    ~ChatTcpServer();
+    ~ChatTcpServer() override;
 
     void loadWindow();
 
@@ -22,7 +23,7 @@ protected:
     void incomingConnection(qintptr socketDescriptor) override;
 
 private slots:
-    void disposeMessage(const QByteArray &sender, const QByteArray &receiver, MSG_TYPE type, MSG_OPTION_TYPE option, const QByteArray &data);
+    void disposeMessage(const QByteArray &sender, const QByteArray &receiver, msg_t type, msg_option_t option, const QByteArray &data);
 
 private:
     Database *m_database;

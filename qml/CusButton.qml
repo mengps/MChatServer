@@ -1,61 +1,58 @@
-import QtQuick 2.7
+import QtQuick 2.12
 
-Item
+Rectangle
 {
-    id: cusButton
+    id: root
+    color: hovered ? "#9AFFFFFF" : "transparent";
 
-    property string buttonNormalImage: ""
-    property string buttonPressedImage: ""
-    property string buttonHoverImage: ""
-    property string buttonDisableImage: ""
-    property bool buttonDisable: false
+    property string buttonNormalImage: "";
+    property string buttonPressedImage: "";
+    property string buttonHoverImage: "";
+    property bool hovered: false;
 
+    signal pressed();
+    signal released();
     signal clicked();
     signal exited();
     signal entered();
 
     Image
     {
-        id: cusButtonImage
+        id: image
         anchors.fill: parent
+        fillMode: Image.PreserveAspectFit
+        antialiasing: true
         mipmap: true
-        source: buttonNormalImage
+        source: root.buttonNormalImage
 
         MouseArea
         {
-            id: cusButtonMouseArea
             anchors.fill: parent
             hoverEnabled: true
 
             onEntered:
             {
-                if (buttonDisable == false)
-                {
-                    cusButton.entered();
-                    cusButtonImage.source = buttonHoverImage;
-                }
+                root.entered();
+                root.hovered = true;
+                image.source = buttonHoverImage;
             }
-            onClicked:
+            onPressed:
             {
-                if (buttonDisable == false)
-                {
-                    cusButton.clicked();
-                    cusButtonImage.source = buttonPressedImage;
-                }
+                root.pressed();
+                root.clicked();
+                image.source = buttonPressedImage;
+            }
+            onReleased:
+            {
+                root.released();
+                image.source = buttonNormalImage;
             }
             onExited:
             {
-                if (buttonDisable == false)
-                {
-                    cusButton.exited();
-                    cusButtonImage.source = buttonNormalImage;
-                }
+                root.exited();
+                root.hovered = false;
+                image.source = buttonNormalImage;
             }
         }
-    }
-    onButtonDisableChanged :
-    {
-        buttonDisable === false ? (cusButtonImage.source = buttonNormalImage)
-                                : (cusButtonImage.source = buttonDisableImage);
     }
 }

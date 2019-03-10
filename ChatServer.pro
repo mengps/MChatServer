@@ -6,7 +6,7 @@ CONFIG += c++11
 
 HEADERS += \
     src/chattcpserver.h \
-    src/mymessagedef.h \
+    src/protocol.h \
     src/chatsocket.h \
     src/framelesswindow.h \
     src/database.h
@@ -17,7 +17,7 @@ SOURCES += \
     src/chatsocket.cpp \
     src/framelesswindow.cpp \
     src/database.cpp \
-    src/mymessagedef.cpp
+    src/protocol.cpp
 
 RESOURCES += qml.qrc
 

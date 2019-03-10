@@ -1,13 +1,14 @@
+#include "chattcpserver.h"
 #include <QQmlEngine>
 #include <QQmlComponent>
 #include <QQuickWindow>
 #include <QNetworkInterface>
 #include <QThread>
 #include <QDateTime>
-#include "chattcpserver.h"
 
 ChatTcpServer::ChatTcpServer(QQmlEngine *engine, QObject *parent)
-    :   m_qmlengine(engine), QTcpServer(parent)
+    : QTcpServer(parent),
+      m_qmlengine(engine)
 {
     m_database = new Database("ServerConnection", this);
 }
@@ -52,7 +53,7 @@ void ChatTcpServer::incomingConnection(qintptr socketDescriptor)
 
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     connect(socket, &ChatSocket::hasNewMessage, this, &ChatTcpServer::disposeMessage);
-    connect(socket, &ChatSocket::consoleMessage, this, [this](const QString &message)
+    connect(socket, &ChatSocket::logMessage, this, [this](const QString &message)
     {
         QMetaObject::invokeMethod(m_window, "addMessage", Q_ARG(QVariant, QVariant(message)));
     });
@@ -73,7 +74,7 @@ void ChatTcpServer::incomingConnection(qintptr socketDescriptor)
     thread->start();
 }
 
-void ChatTcpServer::disposeMessage(const QByteArray &sender, const QByteArray &receiver, MSG_TYPE type, MSG_OPTION_TYPE option, const QByteArray &data)
+void ChatTcpServer::disposeMessage(const QByteArray &sender, const QByteArray &receiver, msg_t type, msg_option_t option, const QByteArray &data)
 {
     //将双方的消息存入
     QFile file("users/" + QString(sender) + "/messageText/MSG" + QString(sender) + ".txt");
@@ -95,6 +96,6 @@ void ChatTcpServer::disposeMessage(const QByteArray &sender, const QByteArray &r
 
     if (m_users.contains(QString(receiver)))    //如果另一方在线
         QMetaObject::invokeMethod(m_users[QString(receiver)], "writeClientData",  Q_ARG(QByteArray, sender),
-                Q_ARG(MSG_TYPE, type),  Q_ARG(MSG_OPTION_TYPE, MO_NULL), Q_ARG(QByteArray, data));
+                Q_ARG(msg_t, type),  Q_ARG(msg_option_t, MO_NULL), Q_ARG(QByteArray, data));
     else m_database->addUnreadMessage(QString(receiver));    //不在线则unreadMessage+1，下次登录时发送
 }

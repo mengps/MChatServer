@@ -1,7 +1,7 @@
+#include "database.h"
 #include <QDir>
 #include <QSqlQuery>
 #include <QSqlError>
-#include "database.h"
 
 extern QDebug operator<<(QDebug debug, const UserInfo &info)
 {

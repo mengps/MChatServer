@@ -1,4 +1,4 @@
-import QtQuick 2.7
+import QtQuick 2.12
 import QtQuick.Window 2.2
 import QtQuick.Controls 1.4
 import QtQuick.Controls 2.2
@@ -60,7 +60,24 @@ FramelessWindow
     {
         anchors.fill: parent
         radius: consoleWindow.radius
-        color: "#FFCC99"
+        gradient: Gradient
+        {
+            GradientStop
+            {
+               position: 0.000
+               color: "#BBEEFA"
+            }
+            GradientStop
+            {
+               position: 0.500
+               color: "#00EA75"
+            }
+            GradientStop
+            {
+               position: 1.000
+               color: "#BBEEFA"
+            }
+        }
     }
 
     ResizeMouseArea
@@ -128,7 +145,6 @@ FramelessWindow
                 buttonNormalImage = "qrc:/image/ButtonImage/close_normal.png";
                 buttonPressedImage = "qrc:/image/ButtonImage/close_down.png";
                 buttonHoverImage = "qrc:/image/ButtonImage/close_hover.png";
-                buttonDisableImage = "qrc:/image/ButtonImage/close_disable.png";
             }
         }
     }
@@ -189,7 +205,7 @@ FramelessWindow
                 id: headerRect;
                 height: 30
                 width: 100
-                border.color: "blue"
+                border.color: "#400040"
                 color: styleData.selected ? "gray" : "transparent"
                 radius: 3
 
@@ -222,7 +238,7 @@ FramelessWindow
                 anchors.fill: parent
                 anchors.topMargin: 4
                 anchors.leftMargin: 1
-                border.color: "blue"
+                border.color: "#400040"
                 radius: 3
                 color: styleData.selected ? "#44EEEEEE" : "#66B5E61D"
 
@@ -273,10 +289,10 @@ FramelessWindow
     Rectangle
     {
         id: consoleWindow
-        opacity: 0.8
+        opacity: 0.9
         radius: 10
         clip: true
-        height: 150
+        height: 160
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
