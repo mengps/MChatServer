@@ -8,7 +8,6 @@ FramelessWindow
 {
     id: root
     visible: true
-    taskbarHint: true
     width: 640
     height: 480
     x: (Screen.desktopAvailableWidth - actualWidth) / 2
@@ -16,6 +15,8 @@ FramelessWindow
     actualHeight: height
     actualWidth: width
     title: qsTr("MPS Chat 服务器")
+    taskbarHint: true
+    windowIcon: "qrc:/image/winIcon.png"
 
     property var usersArray: new Array;
 
@@ -60,22 +61,27 @@ FramelessWindow
     {
         anchors.fill: parent
         radius: consoleWindow.radius
-        gradient: Gradient
+        Rectangle
         {
-            GradientStop
+            anchors.fill: parent
+            radius: parent.radius
+            gradient: Gradient
             {
-               position: 0.000
-               color: "#BBEEFA"
-            }
-            GradientStop
-            {
-               position: 0.500
-               color: "#00EA75"
-            }
-            GradientStop
-            {
-               position: 1.000
-               color: "#BBEEFA"
+                GradientStop
+                {
+                   position: 0.000
+                   color: "#88BBEEFA"
+                }
+                GradientStop
+                {
+                   position: 0.500
+                   color: "#8800EA75"
+                }
+                GradientStop
+                {
+                   position: 1.000
+                   color: "#88BBEEFA"
+                }
             }
         }
     }
@@ -98,8 +104,8 @@ FramelessWindow
         CusButton
         {
             id: menuButton
-            width: 34
-            height: 24
+            width: 32
+            height: 32
 
             onClicked:
             {
@@ -115,8 +121,8 @@ FramelessWindow
         CusButton
         {
             id: minButton
-            width: 34
-            height: 24
+            width: 32
+            height: 32
 
             onClicked:
             {
@@ -133,8 +139,8 @@ FramelessWindow
         CusButton
         {
             id: closeButton
-            width: 34
-            height: 24
+            width: 32
+            height: 32
 
             onClicked:
             {

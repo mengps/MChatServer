@@ -23,7 +23,8 @@ protected:
     void incomingConnection(qintptr socketDescriptor) override;
 
 private slots:
-    void disposeMessage(const QByteArray &sender, const QByteArray &receiver, msg_t type, msg_option_t option, const QByteArray &data);
+    void disposeMessage(const QByteArray &sender, const QByteArray &receiver,
+                        msg_t type, msg_option_t option, const QByteArray &data);
 
 private:
     Database *m_database;

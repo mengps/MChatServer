@@ -10,8 +10,8 @@ typedef quint32 msg_size_t;
 typedef quint8  msg_option_t;
 
 //用于测试
-#define server_ip     "127.0.0.1"
-#define server_port   43800
+#define server_ip      "127.0.0.1"
+#define server_port    43800
 
 //消息头的标志
 #define MSG_FLAG 0xF8AD951A
@@ -19,28 +19,29 @@ typedef quint8  msg_option_t;
 //消息类型
 //系统类型  0x10 ~ 0x30
 #define MSG_IS_SYSTEM(x) (x <= 0x30)
-#define MT_CHECK      0x10        //验证
-#define MT_HEARTBEAT  0x11        //心跳
-#define MT_USERINFO   0x12        //用户信息
-#define MT_UNKNOW     0x20        //未知
+#define MT_CHECK       0x10        //验证
+#define MT_HEARTBEAT   0x11        //心跳
+#define MT_USERINFO    0x12        //用户信息
+#define MT_STATECHANGE 0x13        //状态变化
+#define MT_UNKNOW      0x20        //未知
 
-#define CHECK_SUCCESS "SUCCESS"   //验证成功
-#define CHECK_FAILURE "FAILURE"   //验证失败
-#define SERVER_ID     "SERVER"    //服务器ID
-#define HEARTBEAT     "HEARTBEAT" //心跳数据
-#define USERINFO      "USERINFO"  //用户信息
+#define CHECK_SUCCESS  "SUCCESS"   //验证成功
+#define CHECK_FAILURE  "FAILURE"   //验证失败
+#define SERVER_ID      "SERVER"    //服务器ID
+#define HEARTBEAT      "HEARTBEAT" //心跳数据
+#define USERINFO       "USERINFO"  //用户信息
 
 //用户类型 0x31 ~ 0xFF
 #define MSG_IS_USER(x) (!(MSG_IS_SYSTEM(x)))
-#define MT_SHAKE      0x31        //窗口抖动
-#define MT_TEXT       0x32        //普通文本
-#define MT_IMAGE      0x33        //图像
-#define MT_HEADIMAGE  0x34        //头像
+#define MT_SHAKE       0x31        //窗口抖动
+#define MT_TEXT        0x32        //普通文本
+#define MT_IMAGE       0x33        //图像
+#define MT_FILE        0x34        //文件
 
 //选项类型
-#define MO_NULL       0x10      //无类型
-#define MO_UPLOAD     0x11      //上传
-#define MO_DOWNLOAD   0x12      //下载
+#define MO_NULL        0x10      //无类型
+#define MO_UPLOAD      0x11      //上传
+#define MO_DOWNLOAD    0x12      //下载
 
 /*
  *  \ 消息标志flag \\ 消息类型type \\ 消息大小size \\ 选项类型option \\ 发送者ID \\ 接收者ID \\ MD5验证 \
@@ -78,7 +79,7 @@ struct MessageHeader
                sender.size() +
                receiver.size() +
                md5.size() +
-               4 * 4;
+               3 * 4;       //有三个QByteArray，每个会在前面加4字节大小
     }
 
     msg_flag_t   flag;

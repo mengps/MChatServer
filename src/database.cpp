@@ -13,33 +13,37 @@ extern QDebug operator<<(QDebug debug, const UserInfo &info)
 }
 
 Database::Database(const QString &connectionName, QObject *parent)
-    :   QObject(parent), m_connectionName(connectionName)
+    : QObject(parent),
+      m_connectionName(connectionName)
 {
+    QMutexLocker locker(&m_mutex);
     m_database = QSqlDatabase::addDatabase("QSQLITE", connectionName);
     m_database.setDatabaseName("users/users.db");
     m_database.setHostName("localhost");
     m_database.setUserName("MChatServer");
     m_database.setPassword("123456");
+    m_database.open();
 }
 
 Database::~Database()
 {
-    m_database.close();
+    closeDatabase();
     //QSqlDatabase::removeDatabase(m_connectionName);
 }
 
 bool Database::openDatabase()
 {
-    QMutexLocker locker(&m_mutex);
     if (!m_database.isOpen())
+    {
+        QMutexLocker locker(&m_mutex);
         return m_database.open();
+    }
 
     return true;
 }
 
 void Database::closeDatabase()
 {
-    QMutexLocker locker(&m_mutex);
     if (m_database.isOpen())
         m_database.close();
 }
@@ -58,7 +62,6 @@ bool Database::createUser(const UserInfo &info)
         dir.mkdir(user_dir + "/messageImage");
         dir.mkdir(user_dir + "/messageText");
 
-        openDatabase();
         QString insert = "INSERT INTO info VALUES(?, ?, ?, ?, ?, ?, ?, ?);";
         QSqlQuery query(m_database);
         query.prepare(insert);
@@ -74,7 +77,6 @@ bool Database::createUser(const UserInfo &info)
 
         if (query.exec())
         {
-            closeDatabase();
             return true;
         }
         else
@@ -93,11 +95,11 @@ UserInfo Database::getUserInfo(const QString &username)
     if (!tableExists())
         return UserInfo();
 
-    openDatabase();
     QSqlQuery query(m_database);
     if (!query.exec("SELECT * FROM info WHERE user_username = '" + username + "';"))
          qDebug() << __func__ <<  query.lastError().text();
     query.next();
+
     UserInfo info;
     info.username = query.value(0).toString();
     info.password = query.value(1).toString();
@@ -108,14 +110,16 @@ UserInfo Database::getUserInfo(const QString &username)
     info.signature = query.value(6).toString();
     info.unreadMessage = query.value(7).toInt();
     info.level = query.value(8).toInt();
-    closeDatabase();
 
     return info;
 }
 
 bool Database::addFriend(const QString &username, const QString &friendname)
 {
+    Q_UNUSED(username);
+    Q_UNUSED(friendname);
 
+    return true;
 }
 
 QMap<QString, QStringList> Database::getUserFriends(const QString &username)
@@ -123,7 +127,6 @@ QMap<QString, QStringList> Database::getUserFriends(const QString &username)
     if (!tableExists())
         return QMap<QString, QStringList>();
 
-    openDatabase();
     QString query_friends = "SELECT user_group AS user_group, user_friend AS user_friend "
                             "FROM users "
                             "WHERE user_username = '" + username + "' "
@@ -142,17 +145,17 @@ QMap<QString, QStringList> Database::getUserFriends(const QString &username)
             friends[user_group].append(user_friend);
         }
     }
-    else qDebug() << __func__ <<  query.lastError().text();
-    closeDatabase();
+    else
+    {
+        qDebug() << __func__ <<  query.lastError().text();
+        closeDatabase();
+    }
 
     return friends;
 }
 
 bool  Database::addUnreadMessage(const QString &username)
 {
-    if (!openDatabase())
-        return false;
-
     QString query_update = "UPDATE info "
                            "SET user_unreadMessage = (SELECT user_unreadMessage "
                            "                          FROM info "
@@ -161,7 +164,6 @@ bool  Database::addUnreadMessage(const QString &username)
     QSqlQuery query(m_database);
     if (query.exec(query_update))
     {
-        closeDatabase();
         return true;
     }
     else
@@ -195,7 +197,6 @@ bool Database::tableExists()
     {
         if (query.exec(query_create_info))
         {
-            closeDatabase();
             return true;
         }
         else

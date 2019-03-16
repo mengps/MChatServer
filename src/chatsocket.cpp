@@ -162,8 +162,10 @@ void ChatSocket::processRecvMessage()
         in >> header;
 
         if (header.isEmpty()) return;
-
+        qDebug() << header;
         m_recvHeader = header;
+        m_recvData.remove(0, header.getSize() + 4); //data为QByteArray，前面有4字节的大小
+
         //如果成功读取了一个完整的消息头，但flag不一致(即：不是我的消息)
        if (get_flag(m_recvHeader) != MSG_FLAG)
        {
@@ -196,15 +198,18 @@ void ChatSocket::processRecvMessage()
         auto str = QString::fromLocal8Bit(data);
         auto list = str.split("%%");
         qDebug() << "登录信息：" << list;
-        m_database = new Database(QString::number(qintptr(QThread::currentThreadId()), 16), this);
         m_username = list.at(0).toLatin1();        //记录该socket的帐号
+        m_database = new Database(m_username + QString::number(qintptr(QThread::currentThreadId()), 16), this);
         UserInfo info = m_database->getUserInfo(list.at(0));
         if (info.password == list.at(1))
         {
             writeClientData(SERVER_ID, MT_CHECK, MO_NULL, CHECK_SUCCESS);
             emit clientLoginSuccess(m_username, peerAddress().toString());
         }
-        else writeClientData(SERVER_ID, MT_CHECK, MO_NULL, CHECK_FAILURE);
+        else
+        {
+            writeClientData(SERVER_ID, MT_CHECK, MO_NULL, CHECK_FAILURE);
+        }
         break;
     }
     case MT_USERINFO:
@@ -220,6 +225,10 @@ void ChatSocket::processRecvMessage()
         {
 
         }
+        break;
+    }
+    case MT_STATECHANGE:
+    {
         break;
     }
     case MT_SHAKE:
@@ -242,7 +251,7 @@ void ChatSocket::processRecvMessage()
     case MT_IMAGE:
         break;
 
-    case MT_HEADIMAGE:
+    case MT_FILE:
         break;
 
     case MT_UNKNOW:
