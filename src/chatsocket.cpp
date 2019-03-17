@@ -1,12 +1,12 @@
 #include "chatsocket.h"
-#include <QTimer>
-#include <QThread>
-#include <QDataStream>
-#include <QHostAddress>
+
 #include <QCryptographicHash>
+#include <QHostAddress>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QTimer>
+#include <QThread>
 
 ChatSocket::ChatSocket(qintptr socketDescriptor, QObject *parent)
     : QTcpSocket(parent)
@@ -101,7 +101,7 @@ void ChatSocket::processNextSendMessage()
     }
 }
 
-void ChatSocket::toJsonAndSend(const UserInfo &info, const QMap<QString, QStringList> &friends)
+void ChatSocket::toJsonAndSend(const UserInfo &info, const QMap<QString, QList<FriendInfo> > &friends)
 {
     QJsonObject object;
     object.insert("Username", info.username);
@@ -110,7 +110,7 @@ void ChatSocket::toJsonAndSend(const UserInfo &info, const QMap<QString, QString
     object.insert("Gender", info.gender);
     object.insert("Birthday", info.birthday);
     object.insert("Signature", info.signature);
-    object.insert("UnreadMessage", info.unreadMessage);
+    object.insert("UnreadMessage", 0);
     object.insert("Level", info.level);
     QJsonArray friendList;
     for (auto it = friends.constBegin(); it != friends.constEnd(); it++)
@@ -118,7 +118,7 @@ void ChatSocket::toJsonAndSend(const UserInfo &info, const QMap<QString, QString
         QJsonArray array;
         for (auto it2 : it.value())
         {
-            UserInfo info2 = m_database->getUserInfo(it2);
+            UserInfo info2 = m_database->getUserInfo(it2.friendname);
             QJsonObject object2;
             object2.insert("Username", info2.username);
             object2.insert("Nickname", info2.nickname);
@@ -126,7 +126,7 @@ void ChatSocket::toJsonAndSend(const UserInfo &info, const QMap<QString, QString
             object2.insert("Gender", info2.gender);
             object2.insert("Birthday", info2.birthday);
             object2.insert("Signature", info2.signature);
-            object2.insert("UnreadMessage", info2.unreadMessage);
+            object2.insert("UnreadMessage", it2.unreadMessage);
             object2.insert("Level", info2.level);
             array.append(object2);
         }
@@ -195,8 +195,8 @@ void ChatSocket::processRecvMessage()
         break;
     case MT_CHECK:
     {
-        auto str = QString::fromLocal8Bit(data);
-        auto list = str.split("%%");
+        QString str = QString::fromLocal8Bit(data);
+        QStringList list = str.split("%%");
         qDebug() << "登录信息：" << list;
         m_username = list.at(0).toLatin1();        //记录该socket的帐号
         m_database = new Database(m_username + QString::number(qintptr(QThread::currentThreadId()), 16), this);
@@ -218,8 +218,8 @@ void ChatSocket::processRecvMessage()
         if (get_option(m_recvHeader) == MO_DOWNLOAD)
         {
             auto info = m_database->getUserInfo(m_username);
-            auto friends = m_database->getUserFriends(m_username);
-            toJsonAndSend(info, friends);
+            auto friendsInfo = m_database->getUserFriendsInfo(m_username);
+            toJsonAndSend(info, friendsInfo);
         }
         else if (get_option(m_recvHeader) == MO_UPLOAD)
         {
@@ -229,11 +229,12 @@ void ChatSocket::processRecvMessage()
     }
     case MT_STATECHANGE:
     {
+        emit hasNewMessage(m_username, get_receiver(m_recvHeader), MT_STATECHANGE, MO_NULL, data);
         break;
     }
     case MT_SHAKE:
     {
-        auto str = QString::fromLocal8Bit(data);
+        QString str = QString::fromLocal8Bit(data);
         qDebug() << "发送给" << get_receiver(m_recvHeader) << "的窗口震动";
         emit hasNewMessage(m_username, get_receiver(m_recvHeader),
                            MT_SHAKE, get_option(m_recvHeader), str.toLocal8Bit());
@@ -241,7 +242,7 @@ void ChatSocket::processRecvMessage()
     }
     case MT_TEXT:
     {
-        auto str = QString::fromLocal8Bit(data);
+        QString str = QString::fromLocal8Bit(data);
         qDebug() << "发送给" << get_receiver(m_recvHeader) << "的消息:" << str;
         emit hasNewMessage(m_username, get_receiver(m_recvHeader),
                            MT_TEXT, get_option(m_recvHeader), str.toLocal8Bit());

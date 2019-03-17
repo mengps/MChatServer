@@ -1,14 +1,13 @@
 #include "chattcpserver.h"
+
 #include <QQmlEngine>
 #include <QQmlComponent>
 #include <QQuickWindow>
-#include <QNetworkInterface>
 #include <QThread>
-#include <QDateTime>
 
 ChatTcpServer::ChatTcpServer(QQmlEngine *engine, QObject *parent)
-    : QTcpServer(parent),
-      m_qmlengine(engine)
+    : QTcpServer(parent)
+    , m_qmlengine(engine)
 {
     m_database = new Database("ServerConnection", this);
 }
@@ -26,24 +25,8 @@ void ChatTcpServer::loadWindow()
     m_window->requestActivate();
     m_window->show();
 
-    QString ipAddress;
-    QList<QHostAddress> ipAddressesList = QNetworkInterface::allAddresses();
-
-    for (int i = 0; i < ipAddressesList.size(); ++i)
-    {
-        if (ipAddressesList.at(i) != QHostAddress::LocalHost &&
-                ipAddressesList.at(i).protocol() == QAbstractSocket::IPv4Protocol)
-        {
-            ipAddress = ipAddressesList.at(i).toString();
-            break;
-        }
-    }
-
-    if (ipAddress.isEmpty())
-        ipAddress = QHostAddress(QHostAddress::LocalHost).toString();
-
     QMetaObject::invokeMethod(m_window, "displayServerInfo",
-                              Q_ARG(QVariant, QVariant("127.0.0.1 本地主机")), Q_ARG(QVariant, QVariant(43800)));
+                              Q_ARG(QVariant, QVariant(server_ip)), Q_ARG(QVariant, QVariant(43800)));
 }
 
 void ChatTcpServer::incomingConnection(qintptr socketDescriptor)
@@ -74,28 +57,56 @@ void ChatTcpServer::incomingConnection(qintptr socketDescriptor)
     thread->start();
 }
 
-void ChatTcpServer::disposeMessage(const QByteArray &sender, const QByteArray &receiver, msg_t type, msg_option_t option, const QByteArray &data)
+void ChatTcpServer::saveRecord(const QByteArray &sender, const QByteArray &receiver, const QByteArray &data)
 {
-    //将双方的消息存入
-    QFile file("users/" + QString(sender) + "/messageText/MSG" + QString(sender) + ".txt");
+    //以后会设计一个专门格式化存储聊天记录的工具
+    QFile file("users/" + QString(sender) + "/messageText/MSG" + QString(receiver) + ".txt");
     file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text);
     QTextStream out(&file);
     out << "[time:" << QDateTime::currentDateTime().toString("yyyyMMdd hhmmss") << "]" << endl
-        << "[type:" << type << "]" << endl
-        << "[option:" << option << "]" << endl
         << "[data:" << QString::fromLocal8Bit(data) << "]" << endl;
     file.close();
 
-    file.setFileName("users/" + QString(receiver) + "/messageText/MSG" + QString(receiver) + ".txt");
+    file.setFileName("users/" + QString(receiver) + "/messageText/MSG" + QString(sender) + ".txt");
     file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text);
     out << "[time:" << QDateTime::currentDateTime().toString("yyyyMMdd hhmmss") << "]" << endl
-        << "[type:" << type << "]" << endl
-        << "[option:" << option << "]" << endl
         << "[data:" << QString::fromLocal8Bit(data) << "]" << endl;
     file.close();
+}
 
-    if (m_users.contains(QString(receiver)))    //如果另一方在线
-        QMetaObject::invokeMethod(m_users[QString(receiver)], "writeClientData",  Q_ARG(QByteArray, sender),
-                Q_ARG(msg_t, type),  Q_ARG(msg_option_t, MO_NULL), Q_ARG(QByteArray, data));
-    else m_database->addUnreadMessage(QString(receiver));    //不在线则unreadMessage+1，下次登录时发送
+void ChatTcpServer::writeDataToClient(const QByteArray &sender, const QByteArray &receiver, msg_t type, const QByteArray &data)
+{
+    //因为在不同的线程中，使用invokeMethod调用
+    //此函数简化了操作
+    QMetaObject::invokeMethod(m_users[QString(receiver)], "writeClientData",  Q_ARG(QByteArray, sender),
+            Q_ARG(msg_t, type),  Q_ARG(msg_option_t, MO_NULL), Q_ARG(QByteArray, data));
+}
+
+void ChatTcpServer::disposeMessage(const QByteArray &sender, const QByteArray &receiver, msg_t type, msg_option_t option, const QByteArray &data)
+{
+    switch (type)
+    {
+    case MT_TEXT:
+    {
+        //将双方的消息存入
+        saveRecord(sender, receiver, data);
+        if (m_users.contains(QString(receiver)))    //如果另一方在线
+            writeDataToClient(sender, receiver, MT_TEXT, data);
+        else m_database->addUnreadMessage(QString(sender), QString(receiver));    //不在线则unreadMessage+1，下次登录时发送
+        break;
+    }
+    case MT_STATECHANGE:
+    {
+        QStringList friends = m_database->getUserFriends(sender);
+        for (auto it : friends)
+        {
+            if (m_users.contains(it))    //如果好友在线，则为其发送状态更新
+                writeDataToClient(sender, receiver, MT_STATECHANGE, data);
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
 }

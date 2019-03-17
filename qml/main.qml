@@ -59,8 +59,12 @@ FramelessWindow
 
     Rectangle
     {
-        anchors.fill: parent
+        x: 0
+        y: 0
+        width: parent.width
+        height: parent.height
         radius: consoleWindow.radius
+
         Rectangle
         {
             anchors.fill: parent
@@ -84,251 +88,251 @@ FramelessWindow
                 }
             }
         }
-    }
 
-    ResizeMouseArea
-    {
-        id: resizeMouseArea
-        target: root
-    }
-
-    Row
-    {
-        width: 102
-        height: 40
-        anchors.right: parent.right
-        anchors.rightMargin: 6
-        anchors.top: parent.top
-        anchors.topMargin: 6
-
-        CusButton
+        ResizeMouseArea
         {
-            id: menuButton
-            width: 32
-            height: 32
-
-            onClicked:
-            {
-            }
-            Component.onCompleted:
-            {
-                buttonNormalImage = "qrc:/image/ButtonImage/menu_normal.png";
-                buttonPressedImage = "qrc:/image/ButtonImage/menu_down.png";
-                buttonHoverImage = "qrc:/image/ButtonImage/menu_hover.png";
-            }
+            id: resizeMouseArea
+            target: root
         }
 
-        CusButton
+        Row
         {
-            id: minButton
-            width: 32
-            height: 32
+            width: 102
+            height: 40
+            anchors.right: parent.right
+            anchors.rightMargin: 6
+            anchors.top: parent.top
+            anchors.topMargin: 6
 
-            onClicked:
+            CusButton
             {
-                root.showMinimized();
-            }
-            Component.onCompleted:
-            {
-                buttonNormalImage = "qrc:/image/ButtonImage/min_normal.png";
-                buttonPressedImage = "qrc:/image/ButtonImage/min_down.png";
-                buttonHoverImage = "qrc:/image/ButtonImage/min_hover.png";
-            }
-        }
+                id: menuButton
+                width: 32
+                height: 32
 
-        CusButton
-        {
-            id: closeButton
-            width: 32
-            height: 32
-
-            onClicked:
-            {
-                root.close();
-            }
-            Component.onCompleted:
-            {
-                buttonNormalImage = "qrc:/image/ButtonImage/close_normal.png";
-                buttonPressedImage = "qrc:/image/ButtonImage/close_down.png";
-                buttonHoverImage = "qrc:/image/ButtonImage/close_hover.png";
-            }
-        }
-    }
-
-    ListModel
-    {
-        id: myModel
-    }
-
-    Row
-    {
-        id: serverRect
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: 400
-        height: 45
-
-        Text
-        {
-            id: serverIP
-            height: 45
-            width: 200
-            color: "red"
-            verticalAlignment: Text.AlignVCenter
-            horizontalAlignment: Text.AlignHCenter
-            font.family: "微软雅黑"
-            font.pointSize: 11
-        }
-
-        Text
-        {
-            id: serverPort
-            height: 45
-            width: 200
-            color: "red"
-            verticalAlignment: Text.AlignVCenter
-            horizontalAlignment: Text.AlignHCenter
-            font.family: "微软雅黑"
-            font.pointSize: 11
-        }
-    }
-
-    TableView
-    {
-        id: tableView
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: serverRect.bottom
-        anchors.bottom: consoleWindow.top
-        anchors.bottomMargin: 20
-        model: myModel
-        backgroundVisible: false
-        headerDelegate: Component
-        {
-            id: headerDelegate
-
-            Rectangle
-            {
-                id: headerRect;
-                height: 30
-                width: 100
-                border.color: "#400040"
-                color: styleData.selected ? "gray" : "transparent"
-                radius: 3
-
-                Text
+                onClicked:
                 {
-                    text: styleData.value
-                    anchors.centerIn: parent
-                    font.family: "微软雅黑"
-                    font.pointSize: 10
-                    color: "red"
+                }
+                Component.onCompleted:
+                {
+                    buttonNormalImage = "qrc:/image/ButtonImage/menu_normal.png";
+                    buttonPressedImage = "qrc:/image/ButtonImage/menu_down.png";
+                    buttonHoverImage = "qrc:/image/ButtonImage/menu_hover.png";
                 }
             }
-        }
-        rowDelegate: Component
-        {
-            id: rowDelegate
-            Rectangle
-            {
-                color: "transparent"
-                height: 42
-            }
-        }
-        itemDelegate: Component
-        {
-            id: itemDelegate
 
-            Rectangle
+            CusButton
             {
-                id: tableCell
-                anchors.fill: parent
-                anchors.topMargin: 4
-                anchors.leftMargin: 1
-                border.color: "#400040"
-                radius: 3
-                color: styleData.selected ? "#44EEEEEE" : "#66B5E61D"
+                id: minButton
+                width: 32
+                height: 32
 
-                Text
+                onClicked:
                 {
-                    id: textID
-                    text: styleData.value
-                    font.family: "微软雅黑"
-                    anchors.fill: parent
-                    color: "black"
-                    elide: Text.ElideRight
-                    verticalAlignment: Text.AlignVCenter
-                    horizontalAlignment: Text.AlignHCenter
+                    root.showMinimized();
+                }
+                Component.onCompleted:
+                {
+                    buttonNormalImage = "qrc:/image/ButtonImage/min_normal.png";
+                    buttonPressedImage = "qrc:/image/ButtonImage/min_down.png";
+                    buttonHoverImage = "qrc:/image/ButtonImage/min_hover.png";
+                }
+            }
+
+            CusButton
+            {
+                id: closeButton
+                width: 32
+                height: 32
+
+                onClicked:
+                {
+                    root.close();
+                }
+                Component.onCompleted:
+                {
+                    buttonNormalImage = "qrc:/image/ButtonImage/close_normal.png";
+                    buttonPressedImage = "qrc:/image/ButtonImage/close_down.png";
+                    buttonHoverImage = "qrc:/image/ButtonImage/close_hover.png";
                 }
             }
         }
 
-
-        TableViewColumn
+        ListModel
         {
-            role: "username"
-            title: "帐号"
-            width: 150
+            id: myModel
         }
 
-        TableViewColumn
+        Row
         {
-            role: "ip"
-            title: "连接IP"
-            width: 150
-        }
+            id: serverRect
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: 400
+            height: 45
 
-        TableViewColumn
-        {
-            role: "nickname"
-            title: "昵称"
-            width: 150
-        }
-
-        TableViewColumn
-        {
-            role: "state"
-            title: "状态"
-            width: 100
-        }
-    }
-
-    Rectangle
-    {
-        id: consoleWindow
-        opacity: 0.9
-        radius: 10
-        clip: true
-        height: 160
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-
-        Flickable
-        {
-            id: flick
-            //interactive: false
-            anchors.fill: parent
-            anchors.margins: 15
-            contentHeight: messageText.contentHeight
-            contentWidth: messageText.contentWidth
-
-            TextEdit
+            Text
             {
-                id: messageText
-                width: flick.width
-                height: flick.height
-                wrapMode: Text.WrapAnywhere
+                id: serverIP
+                height: 45
+                width: 200
+                color: "red"
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Text.AlignHCenter
                 font.family: "微软雅黑"
-                //textFormat: Text.RichText
-                text: "服务器运行中..."
-                color: "#400040"
-                onTextChanged: flick.contentY = Math.max(0, contentHeight - height);
+                font.pointSize: 11
             }
 
-            ScrollBar.vertical: ScrollBar
+            Text
             {
-                width: 12
-                policy: ScrollBar.AlwaysOn
+                id: serverPort
+                height: 45
+                width: 200
+                color: "red"
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Text.AlignHCenter
+                font.family: "微软雅黑"
+                font.pointSize: 11
+            }
+        }
+
+        TableView
+        {
+            id: tableView
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: serverRect.bottom
+            anchors.bottom: consoleWindow.top
+            anchors.bottomMargin: 20
+            model: myModel
+            backgroundVisible: false
+            headerDelegate: Component
+            {
+                id: headerDelegate
+
+                Rectangle
+                {
+                    id: headerRect;
+                    height: 30
+                    width: 100
+                    border.color: "#400040"
+                    color: styleData.selected ? "gray" : "transparent"
+                    radius: 3
+
+                    Text
+                    {
+                        text: styleData.value
+                        anchors.centerIn: parent
+                        font.family: "微软雅黑"
+                        font.pointSize: 10
+                        color: "red"
+                    }
+                }
+            }
+            rowDelegate: Component
+            {
+                id: rowDelegate
+                Rectangle
+                {
+                    color: "transparent"
+                    height: 42
+                }
+            }
+            itemDelegate: Component
+            {
+                id: itemDelegate
+
+                Rectangle
+                {
+                    id: tableCell
+                    anchors.fill: parent
+                    anchors.topMargin: 4
+                    anchors.leftMargin: 1
+                    border.color: "#400040"
+                    radius: 3
+                    color: styleData.selected ? "#44EEEEEE" : "#66B5E61D"
+
+                    Text
+                    {
+                        id: textID
+                        text: styleData.value
+                        font.family: "微软雅黑"
+                        anchors.fill: parent
+                        color: "black"
+                        elide: Text.ElideRight
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                }
+            }
+
+
+            TableViewColumn
+            {
+                role: "username"
+                title: "帐号"
+                width: 150
+            }
+
+            TableViewColumn
+            {
+                role: "ip"
+                title: "连接IP"
+                width: 150
+            }
+
+            TableViewColumn
+            {
+                role: "nickname"
+                title: "昵称"
+                width: 150
+            }
+
+            TableViewColumn
+            {
+                role: "state"
+                title: "状态"
+                width: 100
+            }
+        }
+
+        Rectangle
+        {
+            id: consoleWindow
+            opacity: 0.9
+            radius: 10
+            clip: true
+            height: 160
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+
+            Flickable
+            {
+                id: flick
+                //interactive: false
+                anchors.fill: parent
+                anchors.margins: 15
+                contentHeight: messageText.contentHeight
+                contentWidth: messageText.contentWidth
+
+                TextEdit
+                {
+                    id: messageText
+                    width: flick.width
+                    height: flick.height
+                    wrapMode: Text.WrapAnywhere
+                    font.family: "微软雅黑"
+                    //textFormat: Text.RichText
+                    text: "服务器运行中..."
+                    color: "#400040"
+                    onTextChanged: flick.contentY = Math.max(0, contentHeight - height);
+                }
+
+                ScrollBar.vertical: ScrollBar
+                {
+                    width: 12
+                    policy: ScrollBar.AlwaysOn
+                }
             }
         }
     }

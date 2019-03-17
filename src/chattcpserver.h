@@ -2,13 +2,14 @@
 #define CHATTCPSERVER_H
 
 #include "chatsocket.h"
-#include <QTcpServer>
-#include <QPointer>
-#include <QMap>
 
+#include <QMap>
+#include <QPointer>
+#include <QTcpServer>
+
+class ChatSocket;
 class QQmlEngine;
 class QQuickWindow;
-class ChatSocket;
 class ChatTcpServer : public QTcpServer
 {
     Q_OBJECT
@@ -23,8 +24,12 @@ protected:
     void incomingConnection(qintptr socketDescriptor) override;
 
 private slots:
-    void disposeMessage(const QByteArray &sender, const QByteArray &receiver,
-                        msg_t type, msg_option_t option, const QByteArray &data);
+    //保存聊天记录
+    void saveRecord(const QByteArray &sender, const QByteArray &receiver, const QByteArray &data);
+    //写入数据到指定客户端连接
+    void writeDataToClient(const QByteArray &sender, const QByteArray &receiver, msg_t type, const QByteArray &data);
+    //处理消息
+    void disposeMessage(const QByteArray &sender, const QByteArray &receiver, msg_t type, msg_option_t option, const QByteArray &data);
 
 private:
     Database *m_database;

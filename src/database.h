@@ -2,8 +2,8 @@
 #define DATABASE_H
 
 #include <QObject>
-#include <QSqlDatabase>
 #include <QMutex>
+#include <QSqlDatabase>
 #include <QDebug>
 
 struct UserInfo
@@ -15,8 +15,13 @@ struct UserInfo
     QString gender;
     QString birthday;
     QString signature;
-    int unreadMessage;
     int level;
+};
+
+struct FriendInfo
+{
+    QString friendname;
+    int unreadMessage;  
 };
 
 QDebug operator<<(QDebug debug, const UserInfo &info);
@@ -33,12 +38,14 @@ public:
     void closeDatabase();
 
     bool createUser(const UserInfo &info);
-    UserInfo getUserInfo(const QString &username);
-
     bool addFriend(const QString &username, const QString &friendname);
-    QMap<QString, QStringList> getUserFriends(const QString &username);
 
-    bool addUnreadMessage(const QString &username);
+    UserInfo getUserInfo(const QString &username);
+    QStringList getUserFriends(const QString &username);
+    QMap<QString, QList<FriendInfo> > getUserFriendsInfo(const QString &username);
+
+    //增加一条未读记录
+    bool addUnreadMessage(const QString &sender, const QString &receiver);
 
 private:
     bool tableExists();

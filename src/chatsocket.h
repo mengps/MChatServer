@@ -3,9 +3,10 @@
 
 #include "database.h"
 #include "protocol.h"
+
+#include <QDateTime>
 #include <QQueue>
 #include <QTcpSocket>
-#include <QDateTime>
 
 class QTimer;
 class ChatSocket : public QTcpSocket
@@ -35,7 +36,7 @@ private slots:
     void processNextSendMessage();
     void processRecvMessage();
     //将查询到的数据转换成JSON并发送回客户端
-    void toJsonAndSend(const UserInfo &info, const QMap<QString, QStringList> &friends);
+    void toJsonAndSend(const UserInfo &info, const QMap<QString, QList<FriendInfo> > &friends);
 
 private:
     QTimer *m_heartbeat;

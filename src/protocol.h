@@ -1,4 +1,4 @@
-#ifndef PROTOCOL_H
+﻿#ifndef PROTOCOL_H
 #define PROTOCOL_H
 
 #include <QtGlobal>
@@ -39,9 +39,9 @@ typedef quint8  msg_option_t;
 #define MT_FILE        0x34        //文件
 
 //选项类型
-#define MO_NULL        0x10      //无类型
-#define MO_UPLOAD      0x11      //上传
-#define MO_DOWNLOAD    0x12      //下载
+#define MO_NULL        0x10       //无类型
+#define MO_UPLOAD      0x11       //上传
+#define MO_DOWNLOAD    0x12       //下载
 
 /*
  *  \ 消息标志flag \\ 消息类型type \\ 消息大小size \\ 选项类型option \\ 发送者ID \\ 接收者ID \\ MD5验证 \
