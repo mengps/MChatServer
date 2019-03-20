@@ -10,6 +10,7 @@
 
 ChatSocket::ChatSocket(qintptr socketDescriptor, QObject *parent)
     : QTcpSocket(parent)
+    , m_status(OffLine)
 {
     if (!setSocketDescriptor(socketDescriptor))
     {
@@ -140,6 +141,61 @@ void ChatSocket::toJsonAndSend(const UserInfo &info, const QMap<QString, QList<F
     qDebug() << object;
 }
 
+bool ChatSocket::updateInfomation(const QByteArray &infoJson)
+{
+    QJsonParseError error;
+    QJsonDocument doc = QJsonDocument::fromJson(infoJson, &error);
+    if (!doc.isNull() && (error.error == QJsonParseError::NoError))
+    {
+        if (doc.isObject())
+        {
+            UserInfo info;
+            QJsonObject object = doc.object();
+            QJsonValue value = object.value("Username");
+            if (value.isString())
+            {
+                if (m_username != value.toString())
+                    return false;
+                info.username = value.toString();
+            }
+            value = object.value("Password");
+            if (value.isString())
+                info.password = value.toString();
+            value = object.value("Nickname");
+            if (value.isString())
+                info.nickname = value.toString();
+            value = object.value("Gender");
+            if (value.isString())
+                info.gender = value.toString();
+            /*value = object.value("Background");
+            if (value.isString())
+                info.background = value.toString();*/
+            value = object.value("HeadImage");
+            if (value.isString())
+                info.headImage = value.toString();
+            value = object.value("Signature");
+            if (value.isString())
+                info.signature = value.toString();
+            value = object.value("Birthday");
+            if (value.isString())
+                info.birthday = value.toString();
+            value = object.value("Level");
+            if (value.isDouble())
+                info.level = value.toInt();
+
+            qDebug() << info;
+            m_database->setUserInfo(info);
+        }
+    }
+    else
+    {
+        qDebug() << __func__ << "更新不成功：" << error.errorString();
+        return false;
+    }
+
+    return true;
+}
+
 void ChatSocket::writeClientData(const QByteArray &sender, msg_t type, msg_option_t option, const QByteArray &data)
 {
     QByteArray base64 = data.toBase64();
@@ -223,12 +279,13 @@ void ChatSocket::processRecvMessage()
         }
         else if (get_option(m_recvHeader) == MO_UPLOAD)
         {
-
+            updateInfomation(data);
         }
         break;
     }
     case MT_STATECHANGE:
     {
+        m_status = ChatStatus(data.toInt());
         emit hasNewMessage(m_username, get_receiver(m_recvHeader), MT_STATECHANGE, MO_NULL, data);
         break;
     }

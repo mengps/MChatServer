@@ -40,7 +40,9 @@ public:
     bool createUser(const UserInfo &info);
     bool addFriend(const QString &username, const QString &friendname);
 
+    void setUserInfo(const UserInfo &info);
     UserInfo getUserInfo(const QString &username);
+
     QStringList getUserFriends(const QString &username);
     QMap<QString, QList<FriendInfo> > getUserFriendsInfo(const QString &username);
 

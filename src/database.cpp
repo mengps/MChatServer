@@ -121,16 +121,36 @@ bool Database::addFriend(const QString &username, const QString &friendname)
     return true;
 }
 
+void Database::setUserInfo(const UserInfo &info)
+{
+    QString query_update = "UPDATE info "
+                           "SET user_password = '" + info.password +
+                           "', user_nickname = '" + info.nickname +
+                           "', user_headImage = '" + info.headImage +
+                           "', user_gender = '" + info.gender +
+                           "', user_birthday = '" + info.birthday +
+                           "', user_signature = '" + info.signature +
+                           "', user_level = " + QString::number(info.level) +
+                           " WHERE user_username = '" + info.username + "';";
+    QSqlQuery query(m_database);
+    if (query.exec(query_update))
+    {
+        qDebug() << "user info 更新成功";
+    }
+    else
+    {
+        qDebug() << __func__ <<  query.lastError().text();
+        closeDatabase();
+    }
+}
+
 QStringList Database::getUserFriends(const QString &username)
 {
-    if (!tableExists())
-        return QStringList();
-
-    QString query_friends = "SELECT user_friend AS user_friend"
+    QString query_friends = "SELECT user_friend AS user_friend "
                             "FROM users "
                             "WHERE user_username = '" + username + "' "
                             "UNION ALL "
-                            "SELECT user_username AS user_friend"
+                            "SELECT user_username AS user_friend "
                             "FROM users "
                             "WHERE user_friend = '" + username + "'; ";
 
@@ -154,16 +174,13 @@ QStringList Database::getUserFriends(const QString &username)
 
 QMap<QString, QList<FriendInfo> > Database::getUserFriendsInfo(const QString &username)
 {
-    if (!tableExists())
-        return QMap<QString, QList<FriendInfo> >();
-
     QString query_friends = "SELECT user_group AS user_group, user_friend AS user_friend, user_unread AS unreadMessage "
                             "FROM users "
                             "WHERE user_username = '" + username + "' "
                             "UNION ALL "
                             "SELECT friend_group AS user_group, user_username AS user_friend, friend_unread AS unreadMessage "
                             "FROM users "
-                            "WHERE user_friend = '" + username + "'; ";
+                            "WHERE user_friend = '" + username + "';";
     QSqlQuery query(m_database);
     QMap<QString, QList<FriendInfo> > friendsInfo;
     if (query.exec(query_friends))

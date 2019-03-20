@@ -14,6 +14,15 @@ class ChatSocket : public QTcpSocket
     Q_OBJECT
 
 public:
+    enum ChatStatus
+    {
+        Online = 0,     //在线
+        Stealth,        //隐身
+        Busy,           //忙碌
+        OffLine         //离线
+    };
+
+public:
     ChatSocket(qintptr socketDescriptor, QObject *parent = nullptr);
     ~ChatSocket();
 
@@ -35,10 +44,15 @@ private slots:
     void onDisconnected();
     void processNextSendMessage();
     void processRecvMessage();
-    //将查询到的数据转换成JSON并发送回客户端
-    void toJsonAndSend(const UserInfo &info, const QMap<QString, QList<FriendInfo> > &friends);
 
 private:
+    //将查询到的数据转换成JSON并发送回客户端
+    void toJsonAndSend(const UserInfo &info, const QMap<QString, QList<FriendInfo> > &friends);
+    //将json转换成info
+    bool updateInfomation(const QByteArray &infoJson);
+
+private:
+    ChatStatus m_status;
     QTimer *m_heartbeat;
     QDateTime m_lastTime;
     qint64 m_sendDataBytes;

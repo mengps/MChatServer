@@ -101,7 +101,7 @@ void ChatTcpServer::disposeMessage(const QByteArray &sender, const QByteArray &r
         for (auto it : friends)
         {
             if (m_users.contains(it))    //如果好友在线，则为其发送状态更新
-                writeDataToClient(sender, receiver, MT_STATECHANGE, data);
+                writeDataToClient(sender, it.toLatin1(), MT_STATECHANGE, data);
         }
         break;
     }
