@@ -16,6 +16,15 @@ struct UserInfo
     QString birthday;
     QString signature;
     int level;
+
+    UserInfo()
+        : username(""), password(""), nickname("")
+        , headImage(""), gender(""), birthday(""), signature(""), level(0)
+    {
+
+    }
+
+    bool isEmpty() const { return username.isEmpty(); }
 };
 
 struct FriendInfo

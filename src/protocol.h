@@ -23,6 +23,7 @@ typedef quint8  msg_option_t;
 #define MT_HEARTBEAT   0x11        //心跳
 #define MT_USERINFO    0x12        //用户信息
 #define MT_STATECHANGE 0x13        //状态变化
+#define MT_SEARCH      0x14        //获取信息
 #define MT_UNKNOW      0x20        //未知
 
 #define CHECK_SUCCESS  "SUCCESS"   //验证成功
@@ -31,12 +32,17 @@ typedef quint8  msg_option_t;
 #define HEARTBEAT      "HEARTBEAT" //心跳数据
 #define USERINFO       "USERINFO"  //用户信息
 
+#define ADDFRIEND      "ADDFRIEND" //添加好友
+#define ADD_SUCCESS    "SUCCESS"   //添加成功
+#define ADD_FAILURE    "FAILURE"   //添加失败
+
 //用户类型 0x31 ~ 0xFF
 #define MSG_IS_USER(x) (!(MSG_IS_SYSTEM(x)))
 #define MT_SHAKE       0x31        //窗口抖动
 #define MT_TEXT        0x32        //普通文本
 #define MT_IMAGE       0x33        //图像
 #define MT_FILE        0x34        //文件
+#define MT_ADDFRIEND   0x35        //添加好友
 
 //选项类型
 #define MO_NULL        0x10       //无类型

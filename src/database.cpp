@@ -101,14 +101,18 @@ UserInfo Database::getUserInfo(const QString &username)
     query.next();
 
     UserInfo info;
-    info.username = query.value(0).toString();
-    info.password = query.value(1).toString();
-    info.nickname = query.value(2).toString();
-    info.headImage = query.value(3).toString();
-    info.gender = query.value(4).toString();
-    info.birthday = query.value(5).toString();
-    info.signature = query.value(6).toString();
-    info.level = query.value(7).toInt();
+    if (query.isValid())
+    {
+        info.username = query.value(0).toString();
+        info.password = query.value(1).toString();
+        info.nickname = query.value(2).toString();
+        info.headImage = query.value(3).toString();
+        info.gender = query.value(4).toString();
+        info.birthday = query.value(5).toString();
+        info.signature = query.value(6).toString();
+        info.level = query.value(7).toInt();
+    }
+    else qDebug() << __func__ << "未找到" + username + "的信息。";
 
     return info;
 }

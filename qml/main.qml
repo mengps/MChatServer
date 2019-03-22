@@ -31,19 +31,42 @@ FramelessWindow
         messageText.text += "\n" + msg;
     }
 
-    function addNewClient(username, ip)
+    function retState(state)
+    {
+        switch (state)
+        {
+        case 0:
+            return "在线";
+        case 1:
+            return "隐身";
+        case 2:
+            return "忙碌";
+        case 3:
+            return "离线";
+        }
+    }
+
+    function addNewClient(username, ip, state)
     {
         usersArray.push(username);
         myModel.append({ "ip": ip,
                          "username": username,
-                         "nickname": "MPS",
-                         "state": "在线"});
+                         "state": retState(state) });
         addMessage(username + "已经连接...");
     }
 
-    function removeClient(client)
+    function stateChange(username, state)
     {
-        var index = usersArray.indexOf(client);
+        var index = usersArray.indexOf(username);
+        if (index != -1)
+        {
+            myModel.setProperty(index, "state", retState(state));
+        }
+    }
+
+    function removeClient(username)
+    {
+        var index = usersArray.indexOf(username);
         if (index != -1)
         {
             usersArray.splice(index, 1);
@@ -270,21 +293,14 @@ FramelessWindow
             {
                 role: "username"
                 title: "帐号"
-                width: 150
+                width: 180
             }
 
             TableViewColumn
             {
                 role: "ip"
                 title: "连接IP"
-                width: 150
-            }
-
-            TableViewColumn
-            {
-                role: "nickname"
-                title: "昵称"
-                width: 150
+                width: 180
             }
 
             TableViewColumn

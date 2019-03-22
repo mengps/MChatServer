@@ -1,4 +1,4 @@
-#include "chatsocket.h"
+﻿#include "chatsocket.h"
 
 #include <QCryptographicHash>
 #include <QHostAddress>
@@ -10,7 +10,7 @@
 
 ChatSocket::ChatSocket(qintptr socketDescriptor, QObject *parent)
     : QTcpSocket(parent)
-    , m_status(OffLine)
+    , m_status(Offline)
 {
     if (!setSocketDescriptor(socketDescriptor))
     {
@@ -196,6 +196,20 @@ bool ChatSocket::updateInfomation(const QByteArray &infoJson)
     return true;
 }
 
+QByteArray ChatSocket::infoToJson(const UserInfo &info)
+{
+    QJsonObject object;
+    object.insert("Username", info.username);
+    object.insert("Nickname", info.nickname);
+    object.insert("HeadImage", info.headImage);
+    object.insert("Gender", info.gender);
+    object.insert("Birthday", info.birthday);
+    object.insert("Signature", info.signature);
+    object.insert("Level", info.level);
+
+    return QJsonDocument(object).toJson();
+}
+
 void ChatSocket::writeClientData(const QByteArray &sender, msg_t type, msg_option_t option, const QByteArray &data)
 {
     QByteArray base64 = data.toBase64();
@@ -289,20 +303,28 @@ void ChatSocket::processRecvMessage()
         emit hasNewMessage(m_username, get_receiver(m_recvHeader), MT_STATECHANGE, MO_NULL, data);
         break;
     }
+    case MT_SEARCH:
+    {
+        QString username = QString::fromLocal8Bit(data);
+        qDebug() << "获取" << username << "的信息";
+        UserInfo info = m_database->getUserInfo(username);
+
+        QByteArray sendData = infoToJson(info);
+        writeClientData(SERVER_ID, MT_SEARCH, MO_NULL, sendData);
+        break;
+    }
     case MT_SHAKE:
     {
         QString str = QString::fromLocal8Bit(data);
         qDebug() << "发送给" << get_receiver(m_recvHeader) << "的窗口震动";
-        emit hasNewMessage(m_username, get_receiver(m_recvHeader),
-                           MT_SHAKE, get_option(m_recvHeader), str.toLocal8Bit());
+        emit hasNewMessage(m_username, get_receiver(m_recvHeader), MT_SHAKE, get_option(m_recvHeader), data);
         break;
     }
     case MT_TEXT:
     {
         QString str = QString::fromLocal8Bit(data);
         qDebug() << "发送给" << get_receiver(m_recvHeader) << "的消息:" << str;
-        emit hasNewMessage(m_username, get_receiver(m_recvHeader),
-                           MT_TEXT, get_option(m_recvHeader), str.toLocal8Bit());
+        emit hasNewMessage(m_username, get_receiver(m_recvHeader), MT_TEXT, get_option(m_recvHeader), data);
         break;
     }
 
@@ -311,6 +333,14 @@ void ChatSocket::processRecvMessage()
 
     case MT_FILE:
         break;
+
+    case MT_ADDFRIEND:
+    {
+        qDebug() << "发送给" << get_receiver(m_recvHeader) << "的添加好友请求。";
+        emit hasNewMessage(m_username, get_receiver(m_recvHeader),
+                           MT_ADDFRIEND, get_option(m_recvHeader), data);
+        break;
+    }
 
     case MT_UNKNOW:
         break;

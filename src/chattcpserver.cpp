@@ -44,7 +44,8 @@ void ChatTcpServer::incomingConnection(qintptr socketDescriptor)
     {
         ChatSocket *socket = qobject_cast<ChatSocket *>(sender());
         m_users[username] = socket;
-        QMetaObject::invokeMethod(m_window, "addNewClient", Q_ARG(QVariant, username), Q_ARG(QVariant, ip));
+        QMetaObject::invokeMethod(m_window, "addNewClient", Q_ARG(QVariant, username), Q_ARG(QVariant, ip),
+                                  Q_ARG(QVariant, socket->status()));
     });
     connect(socket, &ChatSocket::clientDisconnected, this, [this](const QString &username)
     {
@@ -97,6 +98,7 @@ void ChatTcpServer::disposeMessage(const QByteArray &sender, const QByteArray &r
     }
     case MT_STATECHANGE:
     {
+        QMetaObject::invokeMethod(m_window, "stateChange", Q_ARG(QVariant, QString(sender)), Q_ARG(QVariant, m_users[sender]->status()));
         QStringList friends = m_database->getUserFriends(sender);
         for (auto it : friends)
         {
@@ -104,6 +106,11 @@ void ChatTcpServer::disposeMessage(const QByteArray &sender, const QByteArray &r
                 writeDataToClient(sender, it.toLatin1(), MT_STATECHANGE, data);
         }
         break;
+    }
+    case MT_ADDFRIEND:
+    {
+        if (m_users.contains(QString(receiver)))    //如果另一方在线
+            writeDataToClient(sender, receiver, MT_ADDFRIEND, ADDFRIEND);
     }
 
     default:
