@@ -8,8 +8,8 @@ extern QDebug operator<<(QDebug debug, const UserInfo &info)
 {
     QDebugStateSaver saver(debug);
     debug << "username: " << info.username  << "password: " << info.password  << "nickname: " << info.nickname
-          << "headImage: " << info.headImage << "gende: " << info.gender  << "birthday: " << info.birthday
-          << "signature: " << info.signature  << "level: " << info.level;
+          << "headImage: " << info.headImage << "background" << info.background << "gende: " << info.gender
+          << "birthday: " << info.birthday << "signature: " << info.signature  << "level: " << info.level;
     return debug;
 }
 
@@ -55,39 +55,38 @@ bool Database::createUser(const UserInfo &info)
         return false;
 
     QString user_dir = "users/" + info.username;
-    if (!QFileInfo::exists(user_dir))               //如果该用户不存在,则创建一系列文件夹
+    if (!QFile::exists(user_dir))               //如果该用户不存在,则创建一系列文件夹
     {
         QDir dir;
-        dir.mkdir(user_dir);
-        dir.mkdir(user_dir + "/headImage");
-        dir.mkdir(user_dir + "/messageImage");
-        dir.mkdir(user_dir + "/messageText");
-
-        QString insert = "INSERT INTO info VALUES(?, ?, ?, ?, ?, ?, ?, ?);";
-        QSqlQuery query(m_database);
-        query.prepare(insert);
-        query.addBindValue(info.username);
-        query.addBindValue(info.password);
-        query.addBindValue(info.nickname);
-        query.addBindValue(info.headImage);
-        query.addBindValue(info.gender);
-        query.addBindValue(info.birthday);
-        query.addBindValue(info.signature);
-        query.addBindValue(info.level);
-
-        if (query.exec())
-        {
-            return true;
-        }
-        else
-        {
-            qDebug() << __func__ << query.lastError().text();;
-            closeDatabase();
-            return false;
-        }
+        dir.mkpath(user_dir);
+        dir.mkpath(user_dir + "/headImage");
+        dir.mkpath(user_dir + "/messageImage");
+        dir.mkpath(user_dir + "/messageText");
     }
 
-    return true;
+    QString insert = "INSERT INTO info VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);";
+    QSqlQuery query(m_database);
+    query.prepare(insert);
+    query.addBindValue(info.username);
+    query.addBindValue(info.password);
+    query.addBindValue(info.nickname);
+    query.addBindValue(info.headImage);
+    query.addBindValue(info.background);
+    query.addBindValue(info.gender);
+    query.addBindValue(info.birthday);
+    query.addBindValue(info.signature);
+    query.addBindValue(info.level);
+
+    if (query.exec())
+    {
+        return true;
+    }
+    else
+    {
+        qDebug() << __func__ << query.lastError().text();
+        closeDatabase();
+        return false;
+    }
 }
 
 UserInfo Database::getUserInfo(const QString &username)
@@ -107,10 +106,11 @@ UserInfo Database::getUserInfo(const QString &username)
         info.password = query.value(1).toString();
         info.nickname = query.value(2).toString();
         info.headImage = query.value(3).toString();
-        info.gender = query.value(4).toString();
-        info.birthday = query.value(5).toString();
-        info.signature = query.value(6).toString();
-        info.level = query.value(7).toInt();
+        info.background = query.value(4).toString();
+        info.gender = query.value(5).toString();
+        info.birthday = query.value(6).toString();
+        info.signature = query.value(7).toString();
+        info.level = query.value(8).toInt();
     }
     else qDebug() << __func__ << "未找到" + username + "的信息。";
 
@@ -119,10 +119,28 @@ UserInfo Database::getUserInfo(const QString &username)
 
 bool Database::addFriend(const QString &username, const QString &friendname)
 {
-    Q_UNUSED(username);
-    Q_UNUSED(friendname);
+    /*if (username > friendname)
+        qSwap(username, friendname);*/
+    QString insert = "INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);";
+    QSqlQuery query(m_database);
+    query.prepare(insert);
+    query.addBindValue(username);
+    query.addBindValue(friendname);
+    query.addBindValue("我的好友");
+    query.addBindValue("我的好友");
+    query.addBindValue(0);
+    query.addBindValue(0);
 
-    return true;
+    if (query.exec())
+    {
+        return true;
+    }
+    else
+    {
+        qDebug() << __func__ << query.lastError().text();;
+        closeDatabase();
+        return false;
+    }
 }
 
 void Database::setUserInfo(const UserInfo &info)
@@ -131,6 +149,7 @@ void Database::setUserInfo(const UserInfo &info)
                            "SET user_password = '" + info.password +
                            "', user_nickname = '" + info.nickname +
                            "', user_headImage = '" + info.headImage +
+                           "', user_background = '" + info.background +
                            "', user_gender = '" + info.gender +
                            "', user_birthday = '" + info.birthday +
                            "', user_signature = '" + info.signature +
@@ -164,7 +183,8 @@ QStringList Database::getUserFriends(const QString &username)
     {
         while (query.next())
         {
-            friends << query.value(0).toString();
+            if (query.isValid())
+                friends << query.value(0).toString();
         }
     }
     else
@@ -191,11 +211,14 @@ QMap<QString, QList<FriendInfo> > Database::getUserFriendsInfo(const QString &us
     {
         while (query.next())
         {
-            QString user_group = query.value(0).toString();
-            QString user_friend = query.value(1).toString();
-            int user_unread = query.value(2).toInt();
-            FriendInfo info = { user_friend, user_unread };
-            friendsInfo[user_group].append(info);
+            if (query.isValid())
+            {
+                QString user_group = query.value(0).toString();
+                QString user_friend = query.value(1).toString();
+                int user_unread = query.value(2).toInt();
+                FriendInfo info = { user_friend, user_unread };
+                friendsInfo[user_group].append(info);
+            }
         }
     }
     else
@@ -265,14 +288,15 @@ bool Database::tableExists()
                                  ");";
     QString query_create_info = "CREATE TABLE IF NOT EXISTS info"
                                 "("
-                                "    user_username  varchar(10) NOT NULL PRIMARY KEY,"
-                                "    user_password  varchar(32) NOT NULL,"
-                                "    user_nickname  varchar(32) DEFAULT 'USER',"
-                                "    user_headImage varchar(32) DEFAULT 'qrc:/image/winIcon.png',"
-                                "    user_gender    varchar(2)  DEFAULT '男',"
-                                "    user_birthday  text        DEFAULT '2019-01-01',"
-                                "    user_signature varchar(64) DEFAULT NULL,"
-                                "    user_level     int         DEFAULT 1"
+                                "    user_username   varchar(10) NOT NULL PRIMARY KEY,"
+                                "    user_password   varchar(32) NOT NULL,"
+                                "    user_nickname   varchar(32) DEFAULT 'USER',"
+                                "    user_headImage  varchar(32) DEFAULT 'qrc:/image/winIcon.png',"
+                                "    user_background varchar(32) DEFAULT 'qrc:/image/Background/7.jpg',"
+                                "    user_gender     varchar(2)  DEFAULT '男',"
+                                "    user_birthday   text        DEFAULT '2019-01-01',"
+                                "    user_signature  varchar(64) DEFAULT NULL,"
+                                "    user_level      int         DEFAULT 1"
                                 ");";
     QSqlQuery query(m_database);
     if (query.exec(query_create_users))

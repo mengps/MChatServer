@@ -10,39 +10,47 @@ typedef quint32 msg_size_t;
 typedef quint8  msg_option_t;
 
 //用于测试
-#define server_ip      "127.0.0.1"
+#define server_ip      "10.220.3.25"
 #define server_port    43800
 
 //消息头的标志
 #define MSG_FLAG 0xF8AD951A
 
 //消息类型
-//系统类型  0x10 ~ 0x30
-#define MSG_IS_SYSTEM(x) (x <= 0x30)
+//系统类型  0x10 ~ 0x40
+#define MSG_IS_SYSTEM(x) (x <= 0x40)
 #define MT_CHECK       0x10        //验证
 #define MT_HEARTBEAT   0x11        //心跳
 #define MT_USERINFO    0x12        //用户信息
 #define MT_STATECHANGE 0x13        //状态变化
 #define MT_SEARCH      0x14        //获取信息
-#define MT_UNKNOW      0x20        //未知
+#define MT_ADDFRIEND   0x15        //添加好友
+#define MT_REGISTER    0x16        //注册账户
+#define MT_UNKNOW      0x30        //未知
 
 #define CHECK_SUCCESS  "SUCCESS"   //验证成功
 #define CHECK_FAILURE  "FAILURE"   //验证失败
+
+#define CLIENT_ID      "CLIENT"    //客户端默认ID
 #define SERVER_ID      "SERVER"    //服务器ID
 #define HEARTBEAT      "HEARTBEAT" //心跳数据
 #define USERINFO       "USERINFO"  //用户信息
 
 #define ADDFRIEND      "ADDFRIEND" //添加好友
+//添加成功将发送其信息
 #define ADD_SUCCESS    "SUCCESS"   //添加成功
 #define ADD_FAILURE    "FAILURE"   //添加失败
 
-//用户类型 0x31 ~ 0xFF
+//注册成功/失败消息
+#define REG_SUCCESS    "SUCCESS"   //注册成功
+#define REG_FAILURE    "FAILURE"   //注册失败
+
+//用户类型 0x41 ~ 0xFF
 #define MSG_IS_USER(x) (!(MSG_IS_SYSTEM(x)))
-#define MT_SHAKE       0x31        //窗口抖动
-#define MT_TEXT        0x32        //普通文本
-#define MT_IMAGE       0x33        //图像
-#define MT_FILE        0x34        //文件
-#define MT_ADDFRIEND   0x35        //添加好友
+#define MT_SHAKE       0x41        //窗口抖动
+#define MT_TEXT        0x42        //普通文本
+#define MT_IMAGE       0x43        //图像
+#define MT_FILE        0x44        //文件
 
 //选项类型
 #define MO_NULL        0x10       //无类型
@@ -78,10 +86,10 @@ struct MessageHeader
 
     int getSize() const
     {
-        return sizeof(flag) +
-               sizeof(type) +
-               sizeof(size) +
-               sizeof(option) +
+        return int(sizeof(flag)) +
+               int(sizeof(type)) +
+               int(sizeof(size)) +
+               int(sizeof(option)) +
                sender.size() +
                receiver.size() +
                md5.size() +

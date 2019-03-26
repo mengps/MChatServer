@@ -51,7 +51,9 @@ private:
     //将查询到的数据转换成JSON并发送回客户端
     void toJsonAndSend(const UserInfo &info, const QMap<QString, QList<FriendInfo> > &friends);
     //将json转换成info并更新数据库
-    bool updateInfomation(const QByteArray &infoJson);
+    void updateInfomation(const QByteArray &infoJson);
+    //将json装换成info
+    UserInfo jsonToInfo(const QByteArray &json);
     //将info装换成json
     QByteArray infoToJson(const UserInfo &info);
 

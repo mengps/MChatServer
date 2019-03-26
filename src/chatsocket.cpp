@@ -18,6 +18,7 @@ ChatSocket::ChatSocket(qintptr socketDescriptor, QObject *parent)
         deleteLater();
     }
 
+    m_username = CLIENT_ID;
     m_heartbeat = new QTimer(this);
     m_heartbeat->setInterval(60000);
     m_sendDataBytes = 0;
@@ -108,6 +109,7 @@ void ChatSocket::toJsonAndSend(const UserInfo &info, const QMap<QString, QList<F
     object.insert("Username", info.username);
     object.insert("Nickname", info.nickname);
     object.insert("HeadImage", info.headImage);
+    object.insert("Background", info.background);
     object.insert("Gender", info.gender);
     object.insert("Birthday", info.birthday);
     object.insert("Signature", info.signature);
@@ -141,38 +143,41 @@ void ChatSocket::toJsonAndSend(const UserInfo &info, const QMap<QString, QList<F
     qDebug() << object;
 }
 
-bool ChatSocket::updateInfomation(const QByteArray &infoJson)
+void ChatSocket::updateInfomation(const QByteArray &infoJson)
 {
+    UserInfo info = jsonToInfo(infoJson);
+    qDebug() << info;
+    m_database->setUserInfo(info);
+}
+
+UserInfo ChatSocket::jsonToInfo(const QByteArray &json)
+{
+    UserInfo info;
     QJsonParseError error;
-    QJsonDocument doc = QJsonDocument::fromJson(infoJson, &error);
+    QJsonDocument doc = QJsonDocument::fromJson(json, &error);
     if (!doc.isNull() && (error.error == QJsonParseError::NoError))
     {
         if (doc.isObject())
         {
-            UserInfo info;
             QJsonObject object = doc.object();
             QJsonValue value = object.value("Username");
             if (value.isString())
-            {
-                if (m_username != value.toString())
-                    return false;
                 info.username = value.toString();
-            }
             value = object.value("Password");
             if (value.isString())
                 info.password = value.toString();
             value = object.value("Nickname");
             if (value.isString())
                 info.nickname = value.toString();
-            value = object.value("Gender");
-            if (value.isString())
-                info.gender = value.toString();
-            /*value = object.value("Background");
-            if (value.isString())
-                info.background = value.toString();*/
             value = object.value("HeadImage");
             if (value.isString())
                 info.headImage = value.toString();
+            value = object.value("Background");
+            if (value.isString())
+                info.background = value.toString();
+            value = object.value("Gender");
+            if (value.isString())
+                info.gender = value.toString();
             value = object.value("Signature");
             if (value.isString())
                 info.signature = value.toString();
@@ -182,18 +187,11 @@ bool ChatSocket::updateInfomation(const QByteArray &infoJson)
             value = object.value("Level");
             if (value.isDouble())
                 info.level = value.toInt();
-
-            qDebug() << info;
-            m_database->setUserInfo(info);
         }
     }
-    else
-    {
-        qDebug() << __func__ << "更新不成功：" << error.errorString();
-        return false;
-    }
+    else qDebug() << error.errorString();
 
-    return true;
+    return info;
 }
 
 QByteArray ChatSocket::infoToJson(const UserInfo &info)
@@ -316,7 +314,7 @@ void ChatSocket::processRecvMessage()
     case MT_SHAKE:
     {
         QString str = QString::fromLocal8Bit(data);
-        qDebug() << "发送给" << get_receiver(m_recvHeader) << "的窗口震动";
+        qDebug() << "发送给" << get_receiver(m_recvHeader) << str;
         emit hasNewMessage(m_username, get_receiver(m_recvHeader), MT_SHAKE, get_option(m_recvHeader), data);
         break;
     }
@@ -337,8 +335,31 @@ void ChatSocket::processRecvMessage()
     case MT_ADDFRIEND:
     {
         qDebug() << "发送给" << get_receiver(m_recvHeader) << "的添加好友请求。";
-        emit hasNewMessage(m_username, get_receiver(m_recvHeader),
-                           MT_ADDFRIEND, get_option(m_recvHeader), data);
+        QString addStr = QString::fromLocal8Bit(data);
+        if (addStr == ADD_SUCCESS)   //添加好友成功
+        {
+            m_database->addFriend(get_sender(m_recvHeader), get_receiver(m_recvHeader));
+            //将好友信息发送回去
+            data = infoToJson(m_database->getUserInfo(get_receiver(m_recvHeader)));
+            writeClientData(get_receiver(m_recvHeader), MT_ADDFRIEND, MO_NULL, data);
+            //发送给另一个好友
+            data = infoToJson(m_database->getUserInfo(get_sender(m_recvHeader)));
+        }
+        emit hasNewMessage(m_username, get_receiver(m_recvHeader), MT_ADDFRIEND, MO_NULL, data);
+        break;
+    }
+
+    case MT_REGISTER:
+    {
+        qDebug() << "来自" << get_sender(m_recvHeader) << "的注册请求。";
+        UserInfo info = jsonToInfo(data);
+        m_database = new Database(m_username + QString::number(qintptr(QThread::currentThreadId()), 16), this);
+        if (!info.isEmpty())
+        {
+            if (m_database->createUser(info))
+                writeClientData(SERVER_ID, MT_REGISTER, MO_NULL, REG_SUCCESS);
+            else writeClientData(SERVER_ID, MT_REGISTER, MO_NULL, REG_FAILURE);
+        }
         break;
     }
 

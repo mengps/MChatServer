@@ -1,3 +1,4 @@
+users/
 debug/
 release/
 *.user
@@ -8,5 +9,3 @@ Makefile
 *.rc
 *.exe
 *.qmlc
-
-users/

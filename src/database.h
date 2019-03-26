@@ -12,14 +12,15 @@ struct UserInfo
     QString password;
     QString nickname;
     QString headImage;
+    QString background;
     QString gender;
     QString birthday;
     QString signature;
     int level;
 
     UserInfo()
-        : username(""), password(""), nickname("")
-        , headImage(""), gender(""), birthday(""), signature(""), level(0)
+        : username(""), password(""), nickname("") , headImage("")
+        , background(""), gender(""), birthday(""), signature(""), level(0)
     {
 
     }
@@ -43,6 +44,7 @@ public:
     Database(const QString &connectionName, QObject *parent = nullptr);
     ~Database();
 
+    QString name() const { return m_database.connectionName(); }
     bool openDatabase();
     void closeDatabase();
 

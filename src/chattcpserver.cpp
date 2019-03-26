@@ -87,12 +87,13 @@ void ChatTcpServer::disposeMessage(const QByteArray &sender, const QByteArray &r
 {
     switch (type)
     {
+    case MT_SHAKE:
     case MT_TEXT:
     {
         //将双方的消息存入
         saveRecord(sender, receiver, data);
         if (m_users.contains(QString(receiver)))    //如果另一方在线
-            writeDataToClient(sender, receiver, MT_TEXT, data);
+            writeDataToClient(sender, receiver, type, data);
         else m_database->addUnreadMessage(QString(sender), QString(receiver));    //不在线则unreadMessage+1，下次登录时发送
         break;
     }
@@ -110,7 +111,9 @@ void ChatTcpServer::disposeMessage(const QByteArray &sender, const QByteArray &r
     case MT_ADDFRIEND:
     {
         if (m_users.contains(QString(receiver)))    //如果另一方在线
-            writeDataToClient(sender, receiver, MT_ADDFRIEND, ADDFRIEND);
+        {
+            writeDataToClient(sender, receiver, MT_ADDFRIEND, data);
+        }
     }
 
     default:
